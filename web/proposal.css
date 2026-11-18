@@ -1,0 +1,33 @@
+body { margin: 0; font: 14px/1.5 Inter, "Segoe UI", Helvetica, Arial, sans-serif; color: #2b2622; background: #f5f2ec; }
+header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1rem 1.5rem; background: #39434b; color: #fff; }
+header h1 { margin: 0; font-size: 1.4rem; }
+header p { margin: .2rem 0 0; opacity: .85; }
+.actions { display: flex; gap: .5rem; }
+.actions button, .actions a { font: inherit; font-weight: 600; padding: .5rem .8rem; border-radius: 8px; border: 0; background: #9a4a23; color: #fff; text-decoration: none; cursor: pointer; }
+main { max-width: 1100px; margin: 1.25rem auto; padding: 0 1rem; }
+.plan { background: #fff; border: 1px solid #e2dbd0; border-radius: 12px; padding: .5rem; }
+.plan svg { width: 100%; height: auto; display: block; }
+.facts { background: #fff; border: 1px solid #e2dbd0; border-radius: 12px; padding: 1.2rem; margin-top: 1rem; }
+.kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: .6rem; margin-bottom: 1rem; }
+.kpis div { background: #f7f3ee; border-radius: 9px; padding: .6rem; }
+.kpis b { display: block; font-size: 1.15rem; }
+.kpis span { font-size: .75rem; color: #6f655b; }
+h2 { font-size: 1.05rem; margin: 1rem 0 .4rem; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+table { width: 100%; border-collapse: collapse; }
+td, th { text-align: left; padding: .3rem 0; border-bottom: 1px solid #ece6dc; }
+.n { text-align: right; font-variant-numeric: tabular-nums; }
+.tot td { font-weight: 700; border-bottom: 0; }
+.small { font-size: .78rem; color: #6f655b; }
+.budget { padding: .5rem .7rem; border-radius: 8px; }
+.budget.ok { background: #e3f0e4; color: #2f6b3a; }
+.budget.over { background: #fbe3dc; color: #9b3b1c; }
+@media (max-width: 760px) { .cols, .kpis { grid-template-columns: 1fr 1fr; } header { flex-direction: column; align-items: flex-start; } }
+@media print {
+  body { background: #fff; }
+  .actions { display: none; }
+  header { background: #fff; color: #000; border-bottom: 2px solid #000; }
+  main { margin: 0; max-width: none; }
+  .plan, .facts { border: 0; }
+  .facts { page-break-before: always; }
+}

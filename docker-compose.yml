@@ -1,0 +1,12 @@
+services:
+  barndo:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file: .env
+    volumes:
+      - ./rules:/app/rules        # edit the Excel rulebook on the host
+      - ./modules:/app/modules    # drop your own module DXFs here
+      - ./data:/app/data          # leads database
+      - ./output:/app/output      # generated plans
+    restart: unless-stopped

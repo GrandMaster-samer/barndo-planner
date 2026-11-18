@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Barndo Planner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo" aria-hidden="true">
+    <svg viewBox="0 0 32 32" width="28" height="28"><path d="M3 15 16 5l13 10v12H3z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M11 27v-8h10v8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>
+  </span><span id="company">Barndo Planner</span></div>
+  <div class="tag">Design your barndominium in minutes</div>
+</header>
+
+<main class="wrap">
+  <aside class="panel">
+    <section class="card">
+      <h2>Tell us what you want</h2>
+      <p class="hint">Describe it in your own words. We fill in the form for you.</p>
+      <textarea id="describe" rows="4" placeholder="e.g. 40x60 with a 20 ft shop, 3 bedrooms, 2 baths, big kitchen with a pantry, mudroom from the shop, front porch. Budget around $350k."></textarea>
+      <button id="btn-describe" class="btn primary wide">Fill in my plan</button>
+      <div id="intake-msg" class="msg" hidden></div>
+    </section>
+
+    <form id="form" class="card" autocomplete="off">
+      <h2>Your requirements</h2>
+      <label>Building size
+        <select name="footprint" id="footprint"></select>
+      </label>
+      <div class="row2" id="custom-size" hidden>
+        <label>Width (ft)<input type="number" name="building_width" min="24" max="80" step="1"></label>
+        <label>Length (ft)<input type="number" name="building_length" min="30" max="200" step="1"></label>
+      </div>
+      <div class="row3">
+        <label>Bedrooms<input type="number" name="bedrooms" min="1" max="6"></label>
+        <label>Full baths<input type="number" name="full_baths" min="1" max="5"></label>
+        <label>Half baths<input type="number" name="half_baths" min="0" max="2"></label>
+      </div>
+      <fieldset class="checks">
+        <legend>Extras</legend>
+        <label><input type="checkbox" name="walk_in_closet"> Primary walk-in closet</label>
+        <label><input type="checkbox" name="laundry"> Laundry room</label>
+        <label><input type="checkbox" name="pantry"> Walk-in pantry</label>
+        <label><input type="checkbox" name="mudroom"> Mudroom</label>
+        <label><input type="checkbox" name="office"> Office</label>
+      </fieldset>
+      <h3>Shop / garage</h3>
+      <div class="row3">
+        <label>Shop length (ft)<input type="number" name="shop_length" min="0" max="150" step="2"></label>
+        <label>Side<select name="shop_side"><option value="right">Right</option><option value="left">Left</option></select></label>
+        <label>Overhead doors<input type="number" name="overhead_doors" min="0" max="4"></label>
+      </div>
+      <h3>Porches</h3>
+      <div class="row2">
+        <label>Front porch depth (ft)<input type="number" name="front_porch_depth" min="0" max="16"></label>
+        <label>Back porch depth (ft)<input type="number" name="back_porch_depth" min="0" max="16"></label>
+      </div>
+      <label>Budget (optional)<input type="number" name="budget" min="0" step="5000" placeholder="350000"></label>
+      <label>Anything else?<textarea name="notes" rows="2"></textarea></label>
+      <button type="submit" class="btn primary wide" id="btn-generate">Generate floor plans</button>
+    </form>
+  </aside>
+
+  <section class="results">
+    <div id="empty" class="empty">
+      <h1>Your plans will appear here</h1>
+      <p>Every option is assembled from our pre-engineered room modules, so each one is buildable with our system.
+         Pick a building size and rooms on the left, then press <b>Generate floor plans</b>.</p>
+    </div>
+    <div id="status" class="msg" hidden></div>
+    <div id="grid" class="grid"></div>
+  </section>
+</main>
+
+<dialog id="detail">
+  <div class="dlg-head">
+    <h2 id="d-title">Plan</h2>
+    <button class="icon" id="d-close" aria-label="Close">&times;</button>
+  </div>
+  <div class="dlg-body">
+    <div class="d-plan" id="d-plan"></div>
+    <div class="d-side">
+      <div class="kpis" id="d-kpis"></div>
+      <p id="d-summary" class="summary"></p>
+      <div id="d-notes"></div>
+      <h3>Budget estimate</h3>
+      <table id="d-est" class="tbl"></table>
+      <p class="small">Budget-level estimate from placeholder unit rates. Not a quote.</p>
+      <div class="d-actions">
+        <a class="btn" id="d-proposal" target="_blank" rel="noopener">Open proposal (print / PDF)</a>
+        <a class="btn" id="d-dxf">Download DXF (CAD)</a>
+        <a class="btn" id="d-dwg" hidden>Download DWG</a>
+      </div>
+      <form id="lead" class="card lead">
+        <h3>Like this plan? Get a quote</h3>
+        <div class="row2">
+          <label>Name<input name="name" required></label>
+          <label>Phone<input name="phone"></label>
+        </div>
+        <label>Email<input name="email" type="email" required></label>
+        <label>Message<textarea name="message" rows="2"></textarea></label>
+        <button class="btn primary wide">Send to our team</button>
+        <div id="lead-msg" class="msg" hidden></div>
+      </form>
+    </div>
+  </div>
+</dialog>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
