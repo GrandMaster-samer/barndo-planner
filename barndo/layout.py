@@ -138,6 +138,8 @@ class Layout:
             s.x0, s.x1 = L - s.x1, L - s.x0
             if s.door_side:
                 s.door_side = MIRROR_X[s.door_side]
+            # keep fixtures on the same side of the (mirrored) room
+            s.anchor = {"back-left": "back-right", "back-right": "back-left"}.get(s.anchor, s.anchor)
             s.wing = {"L": "R", "R": "L"}.get(s.wing, s.wing)
         for d in self.doors:
             d.x = L - d.x

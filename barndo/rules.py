@@ -120,6 +120,7 @@ DEFAULT_RULES: list[dict[str, Any]] = [
     dict(id=10, rule="Cost estimates include eave height and roof slope", check="estimate_uses_eave_and_slope", applies_to="", value="", severity="hard", enabled=True),
     dict(id=11, rule="Standard 12' eave and 4:12 slope", check="building_standard", applies_to="", value="eave_height=12,roof_pitch=4", severity="soft", enabled=True),
     dict(id=12, rule="Exterior walls 6\", interior walls 4\"", check="wall_thickness", applies_to="", value="ext=0.5,int=0.333", severity="hard", enabled=True),
+    dict(id=13, rule="Every door swings clear of fixtures, furniture and other doors", check="door_swing_clear", applies_to="", value="", severity="hard", enabled=True),
 ]
 
 DEFAULT_FOOTPRINTS = [(30, 40), (30, 50), (40, 50), (40, 60), (40, 70), (40, 80), (50, 60), (50, 80), (50, 100), (60, 100)]

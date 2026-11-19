@@ -12,10 +12,9 @@
 <circle cx="115.13" cy="516.25" r="8.25" fill="none" stroke="#7b8a93" stroke-width="0.8"/>
 <path d="M127.05,502.95 L127.05,478.2 L101.38,478.2 L101.38,502.95 Z" fill="none" stroke="#7b8a93" stroke-width="0.8"/>
 <circle cx="115.13" cy="490.58" r="8.25" fill="none" stroke="#7b8a93" stroke-width="0.8"/>
-<path d="M167.38,528.62 L167.38,473.62 L152.71,473.62 L152.71,528.62 Z" fill="none" stroke="#a39787" stroke-width="0.8"/>
-<line x1="167.38" y1="514.87" x2="152.71" y2="514.87" stroke="#a39787" stroke-width="0.8"/>
-<line x1="167.38" y1="501.12" x2="152.71" y2="501.12" stroke="#a39787" stroke-width="0.8"/>
-<line x1="167.38" y1="487.37" x2="152.71" y2="487.37" stroke="#a39787" stroke-width="0.8"/>
+<path d="M167.38,513.95 L130.71,513.95 L130.71,528.62 L167.38,528.62 Z" fill="none" stroke="#a39787" stroke-width="0.8"/>
+<line x1="155.19" y1="513.95" x2="155.19" y2="528.62" stroke="#a39787" stroke-width="0.8"/>
+<line x1="143.0" y1="513.95" x2="143.0" y2="528.62" stroke="#a39787" stroke-width="0.8"/>
 <path d="M235.29,389.29 L222.46,389.29 L222.46,444.29 L235.29,444.29 Z" fill="none" stroke="#a39787" stroke-width="0.8"/>
 <path d="M193.12,389.29 L180.29,389.29 L180.29,444.29 L193.12,444.29 Z" fill="none" stroke="#a39787" stroke-width="0.8"/>
 <line x1="228.87" y1="389.29" x2="228.87" y2="444.29" stroke="#a39787" stroke-width="0.8"/>
@@ -91,8 +90,8 @@
 <line x1="752.25" y1="191.25" x2="752.25" y2="158.25" stroke="#4a90b8" stroke-width="1.1"/>
 <line x1="238.0" y1="452.5" x2="208.63" y2="452.5" stroke="#3d342c" stroke-width="1.3"/>
 <path d="M208.63,452.5 A29.369999999999997,29.369999999999997 0 0 0 238.0,481.87" fill="none" stroke="#3d342c" stroke-width="0.7" stroke-dasharray="2 2"/>
-<line x1="232.5" y1="364.5" x2="232.5" y2="390.13" stroke="#3d342c" stroke-width="1.3"/>
-<path d="M232.5,390.13 A25.630000000000003,25.630000000000003 0 0 1 206.87,364.5" fill="none" stroke="#3d342c" stroke-width="0.7" stroke-dasharray="2 2"/>
+<line x1="206.87" y1="364.5" x2="206.87" y2="390.13" stroke="#3d342c" stroke-width="1.3"/>
+<path d="M206.87,390.13 A25.630000000000003,25.630000000000003 0 0 0 232.5,364.5" fill="none" stroke="#3d342c" stroke-width="0.7" stroke-dasharray="2 2"/>
 <line x1="232.5" y1="260.0" x2="232.5" y2="289.37" stroke="#3d342c" stroke-width="1.3"/>
 <path d="M232.5,289.37 A29.37000000000002,29.37000000000002 0 0 1 203.13,260.0" fill="none" stroke="#3d342c" stroke-width="0.7" stroke-dasharray="2 2"/>
 <line x1="238.0" y1="100.49" x2="205.0" y2="100.49" stroke="#3d342c" stroke-width="1.3"/>

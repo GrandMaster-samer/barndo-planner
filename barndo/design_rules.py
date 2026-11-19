@@ -14,7 +14,7 @@ Adding a rule
 Check types: required_fixtures, no_unneeded_hallway, doors_near_corner,
 window_standard, door_standard, laundry_mud_and_windows, must_have_window,
 min_clear_size, min_clear_width, max_circulation_pct, not_adjacent, must_be_adjacent,
-estimate_uses_eave_and_slope, building_standard, wall_thickness.
+estimate_uses_eave_and_slope, building_standard, wall_thickness, door_swing_clear.
 """
 from __future__ import annotations
 
@@ -269,6 +269,23 @@ def _wall_thickness(lay, rb, rule):
     bad = [f"{k} wall is {have[k] * 12:.1f}\" (should be {v * 12:.0f}\")" for k, v in std.items()
            if k in have and abs(have[k] - v) > 0.01]
     return (not bad, "; ".join(bad) or f"Exterior {have['ext'] * 12:.0f}\", interior {have['int'] * 12:.0f}\"")
+
+
+@check("door_swing_clear")
+def _door_swing_clear(lay, rb, rule):
+    from .clearance import door_conflict, fixture_geometry
+
+    fixtures = fixture_geometry(lay, rb)
+    bad = []
+    for d in lay.doors:
+        why = door_conflict(d, lay, rb, fixtures, lay.doors)
+        if why:
+            try:
+                name = lay.space(d.serves).name or d.serves
+            except KeyError:
+                name = d.serves
+            bad.append(f"{name or 'door'} door {why}")
+    return (not bad, "; ".join(dict.fromkeys(bad)) or "All doors open fully without hitting anything")
 
 
 # ---------------------------------------------------------------------------

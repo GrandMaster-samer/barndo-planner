@@ -147,6 +147,7 @@ only adds a warning. Each plan shows a ✓ checklist in the app and on the propo
 | 10 | Cost estimates include eave height and slope | `estimate_uses_eave_and_slope` |
 | 11 | Standard 12' eave and 4:12 slope (soft: flags customer changes) | `building_standard` |
 | 12 | Exterior walls 6", interior 4" | `wall_thickness` |
+| 13 | Every door swings clear of fixtures, furniture and other doors | `door_swing_clear` |
 
 **Adding a rule:** add a row. Most new rules reuse an existing check type, so they need no
 code. Examples:
@@ -161,7 +162,8 @@ code. Examples:
 Available check types: `required_fixtures`, `no_unneeded_hallway`, `doors_near_corner`,
 `window_standard`, `door_standard`, `laundry_mud_and_windows`, `must_have_window`,
 `min_clear_size`, `min_clear_width`, `max_circulation_pct`, `not_adjacent`,
-`must_be_adjacent`, `estimate_uses_eave_and_slope`, `building_standard`, `wall_thickness`.
+`must_be_adjacent`, `estimate_uses_eave_and_slope`, `building_standard`, `wall_thickness`,
+`door_swing_clear`.
 `kitchen` and `living` can be used in `applies_to` for the two halves of the great room.
 A rule that needs new logic is a small function in `barndo/design_rules.py`.
 

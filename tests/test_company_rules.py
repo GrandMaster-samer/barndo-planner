@@ -27,7 +27,7 @@ def layouts(request):
 
 
 def test_all_twelve_rules_are_loaded():
-    assert [r.id for r in RB.rules][:12] == [str(i) for i in range(1, 13)]
+    assert [r.id for r in RB.rules][:13] == [str(i) for i in range(1, 14)]
     assert all(r.check in CHECKS for r in RB.rules)
 
 
@@ -113,3 +113,27 @@ def test_plans_are_varied(layouts):
     if len(ls) >= 3:
         assert len({l.signature.split(" k")[0] for l in ls}) == len(ls)
         assert all(l.concept for l in ls)
+
+
+def test_rule13_doors_swing_clear(layouts):
+    from barndo.clearance import door_conflict, fixture_geometry
+    _, ls = layouts
+    for lay in ls:
+        fx = fixture_geometry(lay, RB)
+        for d in lay.doors:
+            assert door_conflict(d, lay, RB, fx, lay.doors) == "", (d.serves, d.x, d.y)
+
+
+def test_rule13_detects_a_blocked_door():
+    from barndo.clearance import door_conflict, fixture_geometry
+    from barndo.layout import Door
+    lay = generate_layouts(Requirements(), RB, count=1)[0]
+    bath = next(s for s in lay.spaces if s.kind == "master_bath")
+    fx = fixture_geometry(lay, RB)
+    # a door swinging into the middle of the bath from every wall must hit something somewhere
+    hits = 0
+    for x in [bath.x0 + k * 0.5 for k in range(2, int(bath.w * 2) - 2)]:
+        for y, into in ((bath.y0, 1), (bath.y1, -1)):
+            d = Door(x, y, "x", 3, "interior", into=into, serves=bath.id)
+            hits += bool(door_conflict(d, lay, RB, fx, []))
+    assert hits > 0

@@ -37,6 +37,7 @@ from typing import Optional
 
 from .design_rules import check_layout, hard_failures
 from .layout import EPS, OPPOSITE, Door, Layout, Space, Window, shared_edge, side_of
+from .clearance import door_conflict, fixture_geometry
 from .module_library import placement
 from .requirements import Requirements
 from .rules import Rulebook, load_rulebook
@@ -564,6 +565,8 @@ class Builder:
                 sp = Space(sid, it.kind, name, x0, y, x0 + cf.depth, y + s, door_side=ds, column=col, wing=side)
             else:
                 sp = Space(sid, it.kind, name, y, x0, y + s, x0 + cf.depth, door_side=ds, column=col, wing=side)
+            if it.kind in self.rb.modules:
+                sp.anchor = self.rb.m(it.kind).fixture_anchor
             sp._item = it  # type: ignore[attr-defined]
             lay.spaces.append(sp)
             made.append(sp)
@@ -649,26 +652,39 @@ class Builder:
             target = r[1] if axis == "y" else r[0]
             prefs = sorted([end_lo, end_hi], key=lambda c: abs(c - target)) + [(lo + hi) / 2]
         existing = [d for d in lay.doors if d.serves == room.id or self._door_on_space(d, room)]
-        c = None
+        height = self.rb.b("door_height")
+        into_room = (1 if abs(room.x0 - fixed) < EPS else -1) if axis == "y" else (1 if abs(room.y0 - fixed) < EPS else -1)
+        # swinging out of the room is fine into a bedroom (en-suite bath / closet) or the shop,
+        # never into a hallway or the great room
+        can_swing_out = other.kind in ("master_bedroom", "master_bath", "shop")
+        fixtures = getattr(self, "_fixtures", None)
+        d = None
         for pref in prefs:
             cand = _place_on_wall(lo, hi, width, pref, obstacles, margin=min(off, (hi - lo - width) / 2))
             if cand is None:
                 continue
             pt = (fixed, cand) if axis == "y" else (cand, fixed)
-            if any(((d.x - pt[0]) ** 2 + (d.y - pt[1]) ** 2) ** 0.5 < (d.width + width) / 2 + 0.4 for d in existing):
+            if any(((x.x - pt[0]) ** 2 + (x.y - pt[1]) ** 2) ** 0.5 < (x.width + width) / 2 + 0.4 for x in existing):
                 continue
-            c = cand
-            break
-        if c is None:
-            raise Invalid("door_no_spot")
-        hinge = -1 if (c - lo) <= (hi - c) else 1
-        height = self.rb.b("door_height")
-        if axis == "y":
-            into = 1 if abs(room.x0 - fixed) < EPS else -1
-            d = Door(fixed, c, "y", width, kind, into=into, hinge=hinge, serves=room.id, wall=wall, height=height, leaves=leaves)
-        else:
-            into = 1 if abs(room.y0 - fixed) < EPS else -1
-            d = Door(c, fixed, "x", width, kind, into=into, hinge=hinge, serves=room.id, wall=wall, height=height, leaves=leaves)
+            corner_hinge = -1 if (cand - lo) <= (hi - cand) else 1
+            # company rule 13: try hinge / swing combinations until the door swings clear
+            options = [(into_room, corner_hinge), (into_room, -corner_hinge)]
+            if can_swing_out:
+                options += [(-into_room, corner_hinge), (-into_room, -corner_hinge)]
+            for into, hinge in options:
+                if axis == "y":
+                    trial = Door(fixed, cand, "y", width, kind, into=into, hinge=hinge, serves=room.id, wall=wall,
+                                 height=height, leaves=leaves)
+                else:
+                    trial = Door(cand, fixed, "x", width, kind, into=into, hinge=hinge, serves=room.id, wall=wall,
+                                 height=height, leaves=leaves)
+                if not door_conflict(trial, lay, self.rb, fixtures, lay.doors):
+                    d = trial
+                    break
+            if d is not None:
+                break
+        if d is None:
+            raise Invalid("door_swing_blocked")
         lay.doors.append(d)
         return d
 
@@ -718,6 +734,7 @@ class Builder:
                     self._door_on(lay, sp, h, self.rb.m("storage").door_w, prefer=None, ref=(h.cx, h.cy))
 
     def _interior_doors(self, lay: Layout) -> None:
+        self._fixtures = fixture_geometry(lay, self.rb)
         by_id = {s.id: s for s in lay.spaces}
         great = by_id["great_room"]
         for sp in list(lay.spaces):

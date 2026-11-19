@@ -59,10 +59,9 @@
 <circle cx="628.54" cy="357.59" r="8.25" fill="none" stroke="#7b8a93" stroke-width="0.8"/>
 <path d="M616.62,370.88 L616.62,395.63 L642.29,395.63 L642.29,370.88 Z" fill="none" stroke="#7b8a93" stroke-width="0.8"/>
 <circle cx="628.54" cy="383.25" r="8.25" fill="none" stroke="#7b8a93" stroke-width="0.8"/>
-<path d="M576.29,345.21 L576.29,400.21 L590.96,400.21 L590.96,345.21 Z" fill="none" stroke="#a39787" stroke-width="0.8"/>
-<line x1="576.29" y1="358.96" x2="590.96" y2="358.96" stroke="#a39787" stroke-width="0.8"/>
-<line x1="576.29" y1="372.71" x2="590.96" y2="372.71" stroke="#a39787" stroke-width="0.8"/>
-<line x1="576.29" y1="386.46" x2="590.96" y2="386.46" stroke="#a39787" stroke-width="0.8"/>
+<path d="M576.29,359.88 L612.96,359.88 L612.96,345.21 L576.29,345.21 Z" fill="none" stroke="#a39787" stroke-width="0.8"/>
+<line x1="588.48" y1="359.88" x2="588.48" y2="345.21" stroke="#a39787" stroke-width="0.8"/>
+<line x1="600.67" y1="359.88" x2="600.67" y2="345.21" stroke="#a39787" stroke-width="0.8"/>
 <path d="M617.5,319.62 L562.5,319.62 L562.5,339.79 L617.5,339.79 Z" fill="none" stroke="#7b8a93" stroke-width="0.8"/>
 <path d="M613.83,320.54 L591.83,320.54 L591.83,339.79 L613.83,339.79 Z" fill="none" stroke="#7b8a93" stroke-width="0.8"/>
 <path d="M596.42,329.71 L598.3,332.88 L602.83,334.2 L607.37,332.88 L609.25,329.71 L607.37,326.53 L602.83,325.21 L598.3,326.53 L596.42,329.71 Z" fill="none" stroke="#7b8a93" stroke-width="0.8"/>
@@ -112,12 +111,12 @@
 <path d="M531.37,425.0 A29.37000000000002,29.37000000000002 0 0 1 502.0,454.37" fill="none" stroke="#3d342c" stroke-width="0.7" stroke-dasharray="2 2"/>
 <line x1="502.0" y1="348.0" x2="531.37" y2="348.0" stroke="#3d342c" stroke-width="1.3"/>
 <path d="M531.37,348.0 A29.37000000000002,29.37000000000002 0 0 1 502.0,377.37" fill="none" stroke="#3d342c" stroke-width="0.7" stroke-dasharray="2 2"/>
-<line x1="507.49" y1="249.0" x2="507.49" y2="278.37" stroke="#3d342c" stroke-width="1.3"/>
-<path d="M507.49,278.37 A29.37000000000002,29.37000000000002 0 0 0 536.86,249.0" fill="none" stroke="#3d342c" stroke-width="0.7" stroke-dasharray="2 2"/>
+<line x1="507.49" y1="249.0" x2="507.49" y2="219.63" stroke="#3d342c" stroke-width="1.3"/>
+<path d="M507.49,219.63 A29.37000000000002,29.37000000000002 0 0 1 536.86,249.0" fill="none" stroke="#3d342c" stroke-width="0.7" stroke-dasharray="2 2"/>
 <line x1="502.0" y1="100.49" x2="535.0" y2="100.49" stroke="#3d342c" stroke-width="1.3"/>
 <path d="M535.0,100.49 A33.0,33.0 0 0 1 502.0,133.49" fill="none" stroke="#3d342c" stroke-width="0.7" stroke-dasharray="2 2"/>
-<line x1="645.0" y1="414.01" x2="612.0" y2="414.01" stroke="#3d342c" stroke-width="1.3"/>
-<path d="M612.0,414.01 A33.0,33.0 0 0 1 645.0,381.01" fill="none" stroke="#3d342c" stroke-width="0.7" stroke-dasharray="2 2"/>
+<line x1="645.0" y1="414.01" x2="678.0" y2="414.01" stroke="#3d342c" stroke-width="1.3"/>
+<path d="M678.0,414.01 A33.0,33.0 0 0 0 645.0,381.01" fill="none" stroke="#3d342c" stroke-width="0.7" stroke-dasharray="2 2"/>
 <line x1="320.5" y1="529.5" x2="320.5" y2="496.5" stroke="#3d342c" stroke-width="1.3"/>
 <path d="M320.5,496.5 A33.0,33.0 0 0 1 353.5,529.5" fill="none" stroke="#3d342c" stroke-width="0.7" stroke-dasharray="2 2"/>
 <line x1="386.5" y1="529.5" x2="386.5" y2="496.5" stroke="#3d342c" stroke-width="1.3"/>

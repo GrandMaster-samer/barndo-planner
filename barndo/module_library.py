@@ -116,9 +116,9 @@ def _blk_desk(b):
 
 
 def _blk_bench(b):
-    _rect(b, 0, 0, 60, 16, "FURNITURE")
-    for k in range(1, 4):
-        b.add_line((k * 15, 0), (k * 15, 16), dxfattribs={"layer": "FURNITURE"})
+    _rect(b, 0, 0, 40, 16, "FURNITURE")
+    for k in range(1, 3):
+        b.add_line((k * 13.3, 0), (k * 13.3, 16), dxfattribs={"layer": "FURNITURE"})
 
 
 BLOCKS = {
@@ -172,7 +172,7 @@ def _draw(module_id: str, doc, msp, W: float, D: float) -> None:
     elif module_id == "laundry_mud":
         _put(doc, msp, "WASHER", 0, D - 28)
         _put(doc, msp, "DRYER", 28, D - 28)
-        _put(doc, msp, "BENCH_LOCKERS", 0, 0, rotation=0) if W >= 60 else None
+        _put(doc, msp, "BENCH_LOCKERS", 16, 0, rotation=90)           # bench + hooks on the side wall
     elif module_id == "master_wic":
         _rect(msp, 0, 0, 14, D, "FURNITURE")
         _rect(msp, W - 14, 0, W, D, "FURNITURE")
