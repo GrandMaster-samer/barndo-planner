@@ -29,15 +29,18 @@ def template_summary(lay: Layout) -> str:
     parts.append(f"The primary bedroom ({fmt_ft(mb.w)} x {fmt_ft(mb.h)}) comes {suite}.")
     if beds:
         parts.append(f"{len(beds)} more bedroom{'s' if len(beds) > 1 else ''} "
-                     f"{'share' if len(beds) > 1 else 'uses'} {m['full_baths'] - 1 or 'the'} hall bath"
+                     f"{'share' if len(beds) > 1 else 'uses'} {m['full_baths'] - 1 or 'the'} bath"
                      f"{'s' if m['full_baths'] - 1 > 1 else ''}.")
-    extras = [s.name.lower() for s in lay.spaces if s.kind in ("laundry", "pantry", "mudroom", "office", "half_bath", "flex")]
+    extras = [s.name.lower() for s in lay.spaces if s.kind in ("laundry_mud", "pantry", "office", "half_bath", "flex")]
     if extras:
         parts.append("Also included: " + ", ".join(dict.fromkeys(extras)) + ".")
     if lay.shop_length:
         oh = m.get("overhead_doors", 0)
         parts.append(f"The shop has {oh} overhead door{'s' if oh != 1 else ''} and a walk-in door, with direct access "
                      "into the house.")
+    b = lay.estimate.get("building", {})
+    if b:
+        parts.append(f"The building has a {b['eave_height']:g} ft eave and a {b['roof_pitch']:g}:12 roof.")
     if m["porch_sqft"]:
         parts.append(f"Covered porch: {m['porch_sqft']:,} sq ft.")
     parts.extend(lay.notes)

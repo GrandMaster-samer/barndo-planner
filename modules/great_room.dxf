@@ -489,7 +489,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2461363.011435185
+2461364.92568287
   9
 $TDUCREATE
  40
@@ -497,7 +497,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2461363.011435185
+2461364.92568287
   9
 $TDUUPDATE
  40
@@ -549,7 +549,7 @@ $SPLINESEGS
   9
 $HANDSEED
   5
-45
+60
   9
 $SURFTAB1
  70
@@ -929,11 +929,11 @@ $PSTYLEMODE
   9
 $FINGERPRINTGUID
   2
-{49F2B4A0-59F0-4B15-8AA5-BC1773D633C2}
+{ADB50485-DBF1-46A2-AD86-ED60107E380E}
   9
 $VERSIONGUID
   2
-{145DD561-DD26-45B8-A735-7C8C75234895}
+{78E084CD-D796-4D25-A417-D7A15B2859F2}
   9
 $EXTNAMES
 290
@@ -1749,7 +1749,7 @@ ACAD
   0
 APPID
   5
-42
+5D
 330
 3
 100
@@ -1763,7 +1763,7 @@ HATCHBACKGROUNDCOLOR
   0
 APPID
   5
-43
+5E
 330
 3
 100
@@ -1939,7 +1939,7 @@ BLOCK_RECORD
 100
 AcDbSymbolTable
  70
-2
+7
   0
 BLOCK_RECORD
   5
@@ -1974,6 +1974,106 @@ AcDbBlockTableRecord
 *Paper_Space
 340
 1E
+ 70
+0
+280
+1
+281
+0
+  0
+BLOCK_RECORD
+  5
+32
+330
+9
+100
+AcDbSymbolTableRecord
+100
+AcDbBlockTableRecord
+  2
+RANGE
+340
+0
+ 70
+0
+280
+1
+281
+0
+  0
+BLOCK_RECORD
+  5
+3C
+330
+9
+100
+AcDbSymbolTableRecord
+100
+AcDbBlockTableRecord
+  2
+KITCHEN_SINK
+340
+0
+ 70
+0
+280
+1
+281
+0
+  0
+BLOCK_RECORD
+  5
+44
+330
+9
+100
+AcDbSymbolTableRecord
+100
+AcDbBlockTableRecord
+  2
+REFRIGERATOR
+340
+0
+ 70
+0
+280
+1
+281
+0
+  0
+BLOCK_RECORD
+  5
+4B
+330
+9
+100
+AcDbSymbolTableRecord
+100
+AcDbBlockTableRecord
+  2
+ISLAND
+340
+0
+ 70
+0
+280
+1
+281
+0
+  0
+BLOCK_RECORD
+  5
+51
+330
+9
+100
+AcDbSymbolTableRecord
+100
+AcDbBlockTableRecord
+  2
+DINING_TABLE
+340
+0
  70
 0
 280
@@ -2065,6 +2165,644 @@ AcDbEntity
 100
 AcDbBlockEnd
   0
+BLOCK
+  5
+33
+330
+32
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
+  2
+RANGE
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+RANGE
+  1
+
+  0
+LWPOLYLINE
+  5
+35
+330
+32
+100
+AcDbEntity
+  8
+FIXTURE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+0.0
+ 20
+0.0
+ 10
+30.0
+ 20
+0.0
+ 10
+30.0
+ 20
+25.0
+ 10
+0.0
+ 20
+25.0
+  0
+CIRCLE
+  5
+36
+330
+32
+100
+AcDbEntity
+  8
+FIXTURE
+100
+AcDbCircle
+ 10
+8.0
+ 20
+7.0
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+37
+330
+32
+100
+AcDbEntity
+  8
+FIXTURE
+100
+AcDbCircle
+ 10
+8.0
+ 20
+18.0
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+38
+330
+32
+100
+AcDbEntity
+  8
+FIXTURE
+100
+AcDbCircle
+ 10
+22.0
+ 20
+7.0
+ 30
+0.0
+ 40
+4.0
+  0
+CIRCLE
+  5
+39
+330
+32
+100
+AcDbEntity
+  8
+FIXTURE
+100
+AcDbCircle
+ 10
+22.0
+ 20
+18.0
+ 30
+0.0
+ 40
+4.0
+  0
+ENDBLK
+  5
+34
+330
+32
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
+BLOCK
+  5
+3D
+330
+3C
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
+  2
+KITCHEN_SINK
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+KITCHEN_SINK
+  1
+
+  0
+LWPOLYLINE
+  5
+3F
+330
+3C
+100
+AcDbEntity
+  8
+FIXTURE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+0.0
+ 20
+0.0
+ 10
+33.0
+ 20
+0.0
+ 10
+33.0
+ 20
+22.0
+ 10
+0.0
+ 20
+22.0
+  0
+LWPOLYLINE
+  5
+40
+330
+3C
+100
+AcDbEntity
+  8
+FIXTURE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+3.0
+ 20
+3.0
+ 10
+16.0
+ 20
+3.0
+ 10
+16.0
+ 20
+19.0
+ 10
+3.0
+ 20
+19.0
+  0
+LWPOLYLINE
+  5
+41
+330
+3C
+100
+AcDbEntity
+  8
+FIXTURE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+17.0
+ 20
+3.0
+ 10
+30.0
+ 20
+3.0
+ 10
+30.0
+ 20
+19.0
+ 10
+17.0
+ 20
+19.0
+  0
+ENDBLK
+  5
+3E
+330
+3C
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
+BLOCK
+  5
+45
+330
+44
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
+  2
+REFRIGERATOR
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+REFRIGERATOR
+  1
+
+  0
+LWPOLYLINE
+  5
+47
+330
+44
+100
+AcDbEntity
+  8
+FIXTURE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+0.0
+ 20
+0.0
+ 10
+36.0
+ 20
+0.0
+ 10
+36.0
+ 20
+30.0
+ 10
+0.0
+ 20
+30.0
+  0
+LINE
+  5
+48
+330
+44
+100
+AcDbEntity
+  8
+FIXTURE
+100
+AcDbLine
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 11
+36.0
+ 21
+30.0
+ 31
+0.0
+  0
+ENDBLK
+  5
+46
+330
+44
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
+BLOCK
+  5
+4C
+330
+4B
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
+  2
+ISLAND
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+ISLAND
+  1
+
+  0
+LWPOLYLINE
+  5
+4E
+330
+4B
+100
+AcDbEntity
+  8
+FIXTURE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+0.0
+ 20
+0.0
+ 10
+96.0
+ 20
+0.0
+ 10
+96.0
+ 20
+42.0
+ 10
+0.0
+ 20
+42.0
+  0
+ENDBLK
+  5
+4D
+330
+4B
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
+BLOCK
+  5
+52
+330
+51
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
+  2
+DINING_TABLE
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+DINING_TABLE
+  1
+
+  0
+LWPOLYLINE
+  5
+54
+330
+51
+100
+AcDbEntity
+  8
+FURNITURE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+12.0
+ 20
+18.0
+ 10
+84.0
+ 20
+18.0
+ 10
+84.0
+ 20
+60.0
+ 10
+12.0
+ 20
+60.0
+  0
+CIRCLE
+  5
+55
+330
+51
+100
+AcDbEntity
+  8
+FURNITURE
+100
+AcDbCircle
+ 10
+24.0
+ 20
+8.0
+ 30
+0.0
+ 40
+8.0
+  0
+CIRCLE
+  5
+56
+330
+51
+100
+AcDbEntity
+  8
+FURNITURE
+100
+AcDbCircle
+ 10
+24.0
+ 20
+70.0
+ 30
+0.0
+ 40
+8.0
+  0
+CIRCLE
+  5
+57
+330
+51
+100
+AcDbEntity
+  8
+FURNITURE
+100
+AcDbCircle
+ 10
+48.0
+ 20
+8.0
+ 30
+0.0
+ 40
+8.0
+  0
+CIRCLE
+  5
+58
+330
+51
+100
+AcDbEntity
+  8
+FURNITURE
+100
+AcDbCircle
+ 10
+48.0
+ 20
+70.0
+ 30
+0.0
+ 40
+8.0
+  0
+CIRCLE
+  5
+59
+330
+51
+100
+AcDbEntity
+  8
+FURNITURE
+100
+AcDbCircle
+ 10
+72.0
+ 20
+8.0
+ 30
+0.0
+ 40
+8.0
+  0
+CIRCLE
+  5
+5A
+330
+51
+100
+AcDbEntity
+  8
+FURNITURE
+100
+AcDbCircle
+ 10
+72.0
+ 20
+70.0
+ 30
+0.0
+ 40
+8.0
+  0
+ENDBLK
+  5
+53
+330
+51
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
 ENDSEC
   0
 SECTION
@@ -2091,11 +2829,11 @@ AcDbPolyline
  20
 191.0
  10
-168.0
+144.0
  20
 191.0
  10
-168.0
+144.0
  20
 216.0
  10
@@ -2103,207 +2841,7 @@ AcDbPolyline
  20
 216.0
   0
-LWPOLYLINE
-  5
-32
-330
-17
-100
-AcDbEntity
-  8
-FIXTURE
-100
-AcDbPolyline
- 90
-4
- 70
-1
- 10
-132.0
- 20
-186.0
- 10
-168.0
- 20
-186.0
- 10
-168.0
- 20
-216.0
- 10
-132.0
- 20
-216.0
-  0
-TEXT
-  5
-33
-330
-17
-100
-AcDbEntity
-  8
-FIXTURE
-100
-AcDbText
- 10
-138.0
- 20
-198.0
- 30
-0.0
- 40
-4.0
-  1
-REF
-100
-AcDbText
-  0
-LWPOLYLINE
-  5
-34
-330
-17
-100
-AcDbEntity
-  8
-FIXTURE
-100
-AcDbPolyline
- 90
-4
- 70
-1
- 10
-81.0
- 20
-194.0
- 10
-111.0
- 20
-194.0
- 10
-111.0
- 20
-212.0
- 10
-81.0
- 20
-212.0
-  0
-LWPOLYLINE
-  5
-35
-330
-17
-100
-AcDbEntity
-  8
-FIXTURE
-100
-AcDbPolyline
- 90
-4
- 70
-1
- 10
-36.0
- 20
-191.0
- 10
-66.0
- 20
-191.0
- 10
-66.0
- 20
-216.0
- 10
-36.0
- 20
-216.0
-  0
-CIRCLE
-  5
-36
-330
-17
-100
-AcDbEntity
-  8
-FIXTURE
-100
-AcDbCircle
- 10
-43.0
- 20
-197.0
- 30
-0.0
- 40
-4.0
-  0
-CIRCLE
-  5
-37
-330
-17
-100
-AcDbEntity
-  8
-FIXTURE
-100
-AcDbCircle
- 10
-43.0
- 20
-209.0
- 30
-0.0
- 40
-4.0
-  0
-CIRCLE
-  5
-38
-330
-17
-100
-AcDbEntity
-  8
-FIXTURE
-100
-AcDbCircle
- 10
-59.0
- 20
-197.0
- 30
-0.0
- 40
-4.0
-  0
-CIRCLE
-  5
-39
-330
-17
-100
-AcDbEntity
-  8
-FIXTURE
-100
-AcDbCircle
- 10
-59.0
- 20
-209.0
- 30
-0.0
- 40
-4.0
-  0
-LWPOLYLINE
+INSERT
   5
 3A
 330
@@ -2313,179 +2851,95 @@ AcDbEntity
   8
 FIXTURE
 100
-AcDbPolyline
- 90
-4
- 70
-1
+AcDbBlockReference
+  2
+RANGE
  10
-48.0
+40.0
+ 20
+191.0
+ 30
+0.0
+  0
+INSERT
+  5
+42
+330
+17
+100
+AcDbEntity
+  8
+FIXTURE
+100
+AcDbBlockReference
+  2
+KITCHEN_SINK
+ 10
+67.5
+ 20
+193.0
+ 30
+0.0
+  0
+INSERT
+  5
+49
+330
+17
+100
+AcDbEntity
+  8
+FIXTURE
+100
+AcDbBlockReference
+  2
+REFRIGERATOR
+ 10
+108.0
+ 20
+186.0
+ 30
+0.0
+  0
+INSERT
+  5
+4F
+330
+17
+100
+AcDbEntity
+  8
+FIXTURE
+100
+AcDbBlockReference
+  2
+ISLAND
+ 10
+36.0
  20
 107.0
- 10
-144.0
- 20
-107.0
- 10
-144.0
- 20
-149.0
- 10
-48.0
- 20
-149.0
-  0
-LWPOLYLINE
-  5
-3B
-330
-17
-100
-AcDbEntity
-  8
-FURNITURE
-100
-AcDbPolyline
- 90
-4
- 70
-1
- 10
-60.0
- 20
-17.0
- 10
-132.0
- 20
-17.0
- 10
-132.0
- 20
-59.0
- 10
-60.0
- 20
-59.0
-  0
-CIRCLE
-  5
-3C
-330
-17
-100
-AcDbEntity
-  8
-FURNITURE
-100
-AcDbCircle
- 10
-72.0
- 20
-7.0
  30
 0.0
- 40
-8.0
   0
-CIRCLE
+INSERT
   5
-3D
+5B
 330
 17
 100
 AcDbEntity
   8
-FURNITURE
+FIXTURE
 100
-AcDbCircle
+AcDbBlockReference
+  2
+DINING_TABLE
  10
-72.0
+36.0
  20
-69.0
+0.0
  30
 0.0
- 40
-8.0
-  0
-CIRCLE
-  5
-3E
-330
-17
-100
-AcDbEntity
-  8
-FURNITURE
-100
-AcDbCircle
- 10
-96.0
- 20
-7.0
- 30
-0.0
- 40
-8.0
-  0
-CIRCLE
-  5
-3F
-330
-17
-100
-AcDbEntity
-  8
-FURNITURE
-100
-AcDbCircle
- 10
-96.0
- 20
-69.0
- 30
-0.0
- 40
-8.0
-  0
-CIRCLE
-  5
-40
-330
-17
-100
-AcDbEntity
-  8
-FURNITURE
-100
-AcDbCircle
- 10
-120.0
- 20
-7.0
- 30
-0.0
- 40
-8.0
-  0
-CIRCLE
-  5
-41
-330
-17
-100
-AcDbEntity
-  8
-FURNITURE
-100
-AcDbCircle
- 10
-120.0
- 20
-69.0
- 30
-0.0
- 40
-8.0
   0
 ENDSEC
   0
@@ -3477,7 +3931,7 @@ CREATED_BY_EZDXF
   3
 WRITTEN_BY_EZDXF
 350
-44
+5F
   0
 DICTIONARYVAR
   5
@@ -3489,11 +3943,11 @@ DictionaryVariables
 280
 0
   1
-1.4.5 @ 2026-11-18T00:16:28.861079+00:00
+1.4.5 @ 2026-11-19T22:12:59.467815+00:00
   0
 DICTIONARYVAR
   5
-44
+5F
 330
 2D
 100
@@ -3501,7 +3955,7 @@ DictionaryVariables
 280
 0
   1
-1.4.5 @ 2026-11-18T00:16:28.863254+00:00
+1.4.5 @ 2026-11-19T22:12:59.470859+00:00
   0
 ENDSEC
   0

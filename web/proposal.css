@@ -31,3 +31,6 @@ td, th { text-align: left; padding: .3rem 0; border-bottom: 1px solid #ece6dc; }
   .plan, .facts { border: 0; }
   .facts { page-break-before: always; }
 }
+.rules td:first-child { width: 1.6rem; font-weight: 700; color: #2f6b3a; vertical-align: top; }
+.rules tr.warn td:first-child { color: #8a5a00; }
+.rules tr.fail td:first-child { color: #9b3b1c; }

@@ -489,7 +489,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2461363.011435185
+2461364.92568287
   9
 $TDUCREATE
  40
@@ -497,7 +497,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2461363.011435185
+2461364.92568287
   9
 $TDUUPDATE
  40
@@ -549,7 +549,7 @@ $SPLINESEGS
   9
 $HANDSEED
   5
-38
+4B
   9
 $SURFTAB1
  70
@@ -929,11 +929,11 @@ $PSTYLEMODE
   9
 $FINGERPRINTGUID
   2
-{F31198E4-E56F-4975-9AAD-DACA359E8BA1}
+{D4A9B4A7-1BED-48FF-9967-BDC332F07467}
   9
 $VERSIONGUID
   2
-{542C7E2A-EA42-4615-9548-A1BEDC3FE444}
+{02DFD781-7B47-4D47-BA97-65EF2A07E40B}
   9
 $EXTNAMES
 290
@@ -1749,7 +1749,7 @@ ACAD
   0
 APPID
   5
-35
+48
 330
 3
 100
@@ -1763,7 +1763,7 @@ HATCHBACKGROUNDCOLOR
   0
 APPID
   5
-36
+49
 330
 3
 100
@@ -1939,7 +1939,7 @@ BLOCK_RECORD
 100
 AcDbSymbolTable
  70
-2
+5
   0
 BLOCK_RECORD
   5
@@ -1974,6 +1974,66 @@ AcDbBlockTableRecord
 *Paper_Space
 340
 1E
+ 70
+0
+280
+1
+281
+0
+  0
+BLOCK_RECORD
+  5
+31
+330
+9
+100
+AcDbSymbolTableRecord
+100
+AcDbBlockTableRecord
+  2
+WASHER
+340
+0
+ 70
+0
+280
+1
+281
+0
+  0
+BLOCK_RECORD
+  5
+38
+330
+9
+100
+AcDbSymbolTableRecord
+100
+AcDbBlockTableRecord
+  2
+DRYER
+340
+0
+ 70
+0
+280
+1
+281
+0
+  0
+BLOCK_RECORD
+  5
+3F
+330
+9
+100
+AcDbSymbolTableRecord
+100
+AcDbBlockTableRecord
+  2
+BENCH_LOCKERS
+340
+0
  70
 0
 280
@@ -2065,17 +2125,37 @@ AcDbEntity
 100
 AcDbBlockEnd
   0
-ENDSEC
-  0
-SECTION
+BLOCK
+  5
+32
+330
+31
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
   2
-ENTITIES
+WASHER
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+WASHER
+  1
+
   0
 LWPOLYLINE
   5
-31
+34
 330
-17
+31
 100
 AcDbEntity
   8
@@ -2089,25 +2169,25 @@ AcDbPolyline
  10
 0.0
  20
-32.0
+0.0
  10
 27.0
  20
-32.0
+0.0
  10
 27.0
  20
-60.0
+28.0
  10
 0.0
  20
-60.0
+28.0
   0
 CIRCLE
   5
-32
+35
 330
-17
+31
 100
 AcDbEntity
   8
@@ -2117,17 +2197,55 @@ AcDbCircle
  10
 13.5
  20
-45.0
+13.0
  30
 0.0
  40
 9.0
   0
-LWPOLYLINE
+ENDBLK
   5
 33
 330
-17
+31
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
+BLOCK
+  5
+39
+330
+38
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
+  2
+DRYER
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+DRYER
+  1
+
+  0
+LWPOLYLINE
+  5
+3B
+330
+38
 100
 AcDbEntity
   8
@@ -2139,27 +2257,27 @@ AcDbPolyline
  70
 1
  10
+0.0
+ 20
+0.0
+ 10
+27.0
+ 20
+0.0
+ 10
+27.0
+ 20
 28.0
- 20
-32.0
  10
-55.0
+0.0
  20
-32.0
- 10
-55.0
- 20
-60.0
- 10
 28.0
- 20
-60.0
   0
 CIRCLE
   5
-34
+3C
 330
-17
+38
 100
 AcDbEntity
   8
@@ -2167,13 +2285,233 @@ FIXTURE
 100
 AcDbCircle
  10
-41.5
+13.5
  20
-45.0
+13.0
  30
 0.0
  40
 9.0
+  0
+ENDBLK
+  5
+3A
+330
+38
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
+BLOCK
+  5
+40
+330
+3F
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
+  2
+BENCH_LOCKERS
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+BENCH_LOCKERS
+  1
+
+  0
+LWPOLYLINE
+  5
+42
+330
+3F
+100
+AcDbEntity
+  8
+FURNITURE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+0.0
+ 20
+0.0
+ 10
+60.0
+ 20
+0.0
+ 10
+60.0
+ 20
+16.0
+ 10
+0.0
+ 20
+16.0
+  0
+LINE
+  5
+43
+330
+3F
+100
+AcDbEntity
+  8
+FURNITURE
+100
+AcDbLine
+ 10
+15.0
+ 20
+0.0
+ 30
+0.0
+ 11
+15.0
+ 21
+16.0
+ 31
+0.0
+  0
+LINE
+  5
+44
+330
+3F
+100
+AcDbEntity
+  8
+FURNITURE
+100
+AcDbLine
+ 10
+30.0
+ 20
+0.0
+ 30
+0.0
+ 11
+30.0
+ 21
+16.0
+ 31
+0.0
+  0
+LINE
+  5
+45
+330
+3F
+100
+AcDbEntity
+  8
+FURNITURE
+100
+AcDbLine
+ 10
+45.0
+ 20
+0.0
+ 30
+0.0
+ 11
+45.0
+ 21
+16.0
+ 31
+0.0
+  0
+ENDBLK
+  5
+41
+330
+3F
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
+ENDSEC
+  0
+SECTION
+  2
+ENTITIES
+  0
+INSERT
+  5
+36
+330
+17
+100
+AcDbEntity
+  8
+FIXTURE
+100
+AcDbBlockReference
+  2
+WASHER
+ 10
+0.0
+ 20
+44.0
+ 30
+0.0
+  0
+INSERT
+  5
+3D
+330
+17
+100
+AcDbEntity
+  8
+FIXTURE
+100
+AcDbBlockReference
+  2
+DRYER
+ 10
+28.0
+ 20
+44.0
+ 30
+0.0
+  0
+INSERT
+  5
+46
+330
+17
+100
+AcDbEntity
+  8
+FIXTURE
+100
+AcDbBlockReference
+  2
+BENCH_LOCKERS
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
   0
 ENDSEC
   0
@@ -3165,7 +3503,7 @@ CREATED_BY_EZDXF
   3
 WRITTEN_BY_EZDXF
 350
-37
+4A
   0
 DICTIONARYVAR
   5
@@ -3177,11 +3515,11 @@ DictionaryVariables
 280
 0
   1
-1.4.5 @ 2026-11-18T00:16:28.893845+00:00
+1.4.5 @ 2026-11-19T22:12:59.515959+00:00
   0
 DICTIONARYVAR
   5
-37
+4A
 330
 2D
 100
@@ -3189,7 +3527,7 @@ DictionaryVariables
 280
 0
   1
-1.4.5 @ 2026-11-18T00:16:28.898847+00:00
+1.4.5 @ 2026-11-19T22:12:59.517514+00:00
   0
 ENDSEC
   0

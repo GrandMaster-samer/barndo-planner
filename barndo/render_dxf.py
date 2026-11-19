@@ -15,14 +15,15 @@ from ezdxf.enums import TextEntityAlignment
 
 from .config import COMPANY_NAME, ODA_CONVERTER
 from .layout import Layout, clear_dims, fmt_ft
-from .render_svg import door_symbol, fixture_placements, wall_geometry
+from .estimate import building_geometry
+from .render_svg import door_leaves, fixture_placements, wall_geometry
 from .rules import Rulebook
 
 IN = 12.0  # feet -> inches
 
 LAYERS = {
     "A-WALL": 7, "A-WALL-PATT": 8, "A-DOOR": 2, "A-GLAZ": 4, "A-OVHD": 6, "A-AREA": 9, "A-AREA-IDEN": 7,
-    "A-FURN": 8, "A-FLOR-FIXT": 4, "S-COLS": 1, "A-DIMS": 3, "A-PORCH": 30, "A-ANNO-TTLB": 7,
+    "A-FURN": 8, "A-FLOR-FIXT": 4, "A-GLAZ-IDEN": 4, "S-COLS": 1, "A-DIMS": 3, "A-PORCH": 30, "A-ANNO-TTLB": 7,
 }
 
 
@@ -112,15 +113,16 @@ def write_dxf(lay: Layout, rb: Rulebook, path: Path | str, customer: str = "") -
             t = msp.add_text(f"{fmt_ft(d.width)} OVERHEAD DOOR", height=6, dxfattribs={"layer": "A-DOOR", "rotation": rot})
             t.set_placement(_pt(tp), align=TextEntityAlignment.MIDDLE_CENTER)
             continue
-        hinge, leaf, closed = door_symbol(d, ext, L, D)
-        msp.add_line(_pt(hinge), _pt(leaf), dxfattribs={"layer": "A-DOOR"})
-        a_leaf = math.degrees(math.atan2(leaf[1] - hinge[1], leaf[0] - hinge[0])) % 360
-        a_closed = math.degrees(math.atan2(closed[1] - hinge[1], closed[0] - hinge[0])) % 360
-        if round((a_closed - a_leaf) % 360) == 90:
-            start, end = a_leaf, a_closed
-        else:
-            start, end = a_closed, a_leaf
-        msp.add_arc(_pt(hinge), d.width * IN, start, end, dxfattribs={"layer": "A-DOOR"})
+        for hinge, leaf, closed in door_leaves(d, ext, L, D):
+            msp.add_line(_pt(hinge), _pt(leaf), dxfattribs={"layer": "A-DOOR"})
+            a_leaf = math.degrees(math.atan2(leaf[1] - hinge[1], leaf[0] - hinge[0])) % 360
+            a_closed = math.degrees(math.atan2(closed[1] - hinge[1], closed[0] - hinge[0])) % 360
+            if round((a_closed - a_leaf) % 360) == 90:
+                start, end = a_leaf, a_closed
+            else:
+                start, end = a_closed, a_leaf
+            radius = math.hypot(leaf[0] - hinge[0], leaf[1] - hinge[1])
+            msp.add_arc(_pt(hinge), radius * IN, start, end, dxfattribs={"layer": "A-DOOR"})
 
     # --- windows -----------------------------------------------------------------
     for w in lay.windows:
@@ -133,6 +135,14 @@ def write_dxf(lay: Layout, rb: Rulebook, path: Path | str, customer: str = "") -
             pts = [(x0, w.y - w.width / 2), (x1, w.y - w.width / 2), (x1, w.y + w.width / 2), (x0, w.y + w.width / 2)]
             msp.add_line(_pt(((x0 + x1) / 2, w.y - w.width / 2)), _pt(((x0 + x1) / 2, w.y + w.width / 2)), dxfattribs={"layer": "A-GLAZ"})
         msp.add_lwpolyline([_pt(p) for p in pts], close=True, dxfattribs={"layer": "A-GLAZ"})
+        tag = _window_tag(w)
+        off = 1.6
+        if w.axis == "x":
+            tp, rot = (w.x, (-off if abs(w.y) < 1e-6 else D + off)), 0
+        else:
+            tp, rot = ((-off if abs(w.x) < 1e-6 else L + off), w.y), 90
+        t = msp.add_text(tag, height=5, dxfattribs={"layer": "A-GLAZ-IDEN", "rotation": rot})
+        t.set_placement(_pt(tp), align=TextEntityAlignment.MIDDLE_CENTER)
 
     # --- posts -------------------------------------------------------------------
     ps = rb.b("post_size")
@@ -178,7 +188,8 @@ def _title_block(msp, lay: Layout, rb: Rulebook, customer: str, top_y: float) ->
     L = lay.length
     width = max(L, 60.0)
     rows = [s for s in lay.spaces if s.kind in rb.modules]
-    height = max(16.0, 5 + 1.45 * (len(rows) + 2))
+    sched = _schedules(lay)
+    height = max(16.0, 5 + 1.45 * (len(rows) + 2), 5 + 1.45 * (len(sched) + 10))
     x0, y1 = 0.0, top_y
     y0 = y1 - height
     msp.add_lwpolyline([_pt(p) for p in ((x0, y0), (x0 + width, y0), (x0 + width, y1), (x0, y1))], close=True,
@@ -201,10 +212,17 @@ def _title_block(msp, lay: Layout, rb: Rulebook, customer: str, top_y: float) ->
         f"Building: {m.get('footprint', '')}   Living: {m.get('living_sqft', '')} SF   Shop: {m.get('shop_sqft', 0)} SF   Porch: {m.get('porch_sqft', 0)} SF",
         f"{m.get('bedrooms')} bed / {m.get('full_baths')} bath" + (f" / {m.get('half_baths')} half" if m.get('half_baths') else ""),
         f"Budget estimate: ${lay.estimate.get('total', 0):,.0f}  (placeholder rates)",
-        f"Post spacing {rb.b('bay_spacing'):g} ft.  Ext. walls {fmt_ft(rb.b('ext_wall'))}.  Engineer of record to verify structure.",
+        _building_line(lay, rb),
+        f"Post spacing {rb.b('bay_spacing'):g} ft.  Ext. walls {rb.b('ext_wall') * 12:.0f}\", int. walls {rb.b('int_wall') * 12:.0f}\".  Engineer of record to verify structure.",
     ]:
         txt(line, x0 + 1.5, y, 7)
         y -= 1.5
+    y -= 0.6
+    txt("DOOR & WINDOW SCHEDULE", x0 + 1.5, y, 8, True)
+    y -= 1.7
+    for line in sched:
+        txt(line, x0 + 1.5, y, 6.5)
+        y -= 1.4
     # schedule
     sx = x0 + width * 0.55 + 1.5
     y = y1 - 2
@@ -240,3 +258,38 @@ def convert_to_dwg(dxf_path: Path | str, out_dir: Path | str | None = None, vers
         target = out_dir / (dxf_path.stem + ".dwg")
         shutil.copy(produced[0], target)
         return target
+
+
+def _ft_in_code(v: float) -> str:
+    """3.0 -> '30', 6.667 -> '68' (door/window size codes like 3068)."""
+    inches = int(round(v * 12))
+    return f"{inches // 12}{inches % 12}"
+
+
+def _window_tag(w) -> str:
+    base = f"{_ft_in_code(w.width / w.units)}{_ft_in_code(w.height)}"
+    return f"(2) {base}" if w.units == 2 else base
+
+
+def _schedules(lay: Layout) -> list[str]:
+    from collections import Counter
+    doors = Counter()
+    for d in lay.doors:
+        if d.kind == "overhead":
+            doors[f"Overhead door {fmt_ft(d.width)} x {fmt_ft(d.height)}"] += 1
+        elif d.leaves == 2:
+            doors[f"Double entry door {fmt_ft(d.width)} x {fmt_ft(d.height)} ({_ft_in_code(d.width)}{_ft_in_code(d.height)})"] += 1
+        else:
+            kind = "Exterior" if d.kind == "exterior" else "Interior"
+            doors[f"{kind} door {fmt_ft(d.width)} x {fmt_ft(d.height)} ({_ft_in_code(d.width)}{_ft_in_code(d.height)})"] += 1
+    wins = Counter()
+    for w in lay.windows:
+        size = f"{fmt_ft(w.width / w.units)} x {fmt_ft(w.height)}"
+        wins[f"{'Double' if w.units == 2 else 'Single'} window {size} ({_window_tag(w)})"] += 1
+    return [f"{n}x  {k}" for k, n in sorted(doors.items())] + [f"{n}x  {k}" for k, n in sorted(wins.items())]
+
+
+def _building_line(lay: Layout, rb: Rulebook) -> str:
+    g = building_geometry(lay, rb)
+    return (f"Eave {fmt_ft(g['eave_height'])}   Roof {g['roof_pitch']:g}:12   Ridge {fmt_ft(g['ridge_height'])}   "
+            f"Wall area {g['wall_area_sqft']:,} SF   Roof area {g['roof_area_sqft']:,} SF")

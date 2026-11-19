@@ -35,7 +35,9 @@ from collections import Counter
 from dataclasses import dataclass, field
 from typing import Optional
 
-from .layout import EPS, Door, Layout, Space, Window, shared_edge, side_of
+from .design_rules import check_layout, hard_failures
+from .layout import EPS, OPPOSITE, Door, Layout, Space, Window, shared_edge, side_of
+from .module_library import placement
 from .requirements import Requirements
 from .rules import Rulebook, load_rulebook
 from .walls import interior_wall_length
@@ -104,8 +106,10 @@ def room_program(req: Requirements, rb: Rulebook) -> dict[str, int]:
         prog["master_wic"] = 1
     prog["bedroom"] = req.bedrooms - 1
     prog["full_bath"] = req.full_baths - 1
-    for kind, n in (("half_bath", req.half_baths), ("laundry", int(req.laundry)), ("pantry", int(req.pantry)),
-                    ("mudroom", int(req.mudroom)), ("office", int(req.office))):
+    # company rule 6: laundry and mudroom are always one room
+    laundry_mud = int(req.laundry or req.mudroom)
+    for kind, n in (("half_bath", req.half_baths), ("laundry_mud", laundry_mud), ("pantry", int(req.pantry)),
+                    ("office", int(req.office))):
         if n and _available(rb, kind):
             prog[kind] += n
     return {k: v for k, v in prog.items() if v > 0}
@@ -140,7 +144,7 @@ def _arrange(rng: random.Random, groups: list[list[Item]], rb: Rulebook, ends_on
     return [i for g in groups for i in g]
 
 
-def random_plan(rng: random.Random, req: Requirements, rb: Rulebook, extra_flex: int = 0) -> list[WingPlan]:
+def random_plan(rng: random.Random, req: Requirements, rb: Rulebook, extra_flex: int = 0) -> tuple[list[WingPlan], dict]:
     prog = room_program(req, rb)
     if extra_flex and _available(rb, "flex"):
         prog["flex"] = prog.get("flex", 0) + extra_flex
@@ -194,25 +198,27 @@ def random_plan(rng: random.Random, req: Requirements, rb: Rulebook, extra_flex:
         w = rng.choice(sides)
         wings[w]["B"].append([Item("half_bath")])
     shop_wing = "R" if (has_shop and "R" in sides) else ("B" if has_shop and "B" in sides else None)
-    if prog.get("laundry"):
-        w = shop_wing if (shop_wing and rng.random() < 0.6) else rng.choice(sides)
-        wings[w]["A" if rng.random() < 0.4 else "B"].append([Item("laundry")])
-    if prog.get("mudroom"):
+    if prog.get("laundry_mud"):
         w = shop_wing if (shop_wing and rng.random() < 0.75) else rng.choice(sides)
-        wings[w]["A" if (w == shop_wing and rng.random() < 0.7) else "B"].append([Item("mudroom")])
+        wings[w]["A" if (w == shop_wing and rng.random() < 0.7) else "B"].append([Item("laundry_mud")])
     if prog.get("pantry"):
         w = rng.choice(sides)
         wings[w]["B" if rng.random() < 0.85 else "A"].append([Item("pantry")])
 
+    # company rules 2 + 9: avoid hallways whenever rooms can open straight into the open space
+    no_hall_p = 0.6 if req.living_length <= 50 else 0.4
+    halls = {}
+    for s in sides:
+        halls[s] = bool(wings[s]["B"]) and rng.random() >= no_hall_p
+        if not halls[s]:
+            wings[s]["A"] += wings[s]["B"]
+            wings[s]["B"] = []
+    _rebalance(rng, wings, halls, req, rb)
+
     plans = []
-    no_hall_p = 0.45 if req.living_length <= 50 else 0.2
     for s in sides:
         a_groups, b_groups = wings[s]["A"], wings[s]["B"]
-        hall = True
-        if rng.random() < no_hall_p:
-            hall = False
-            a_groups = a_groups + b_groups
-            b_groups = []
+        hall = halls[s] and bool(b_groups)
         a_ends_only = (s == "R" and has_shop)
         if s == "B":
             a_ends_only = False
@@ -227,13 +233,66 @@ def random_plan(rng: random.Random, req: Requirements, rb: Rulebook, extra_flex:
                 it.door = "great" if rng.random() < 0.8 else "hall"
         if col_b:
             col_b.insert(rng.randint(0, len(col_b)), Item("link", "none"))
-        if s == "R" and has_shop and not any(i.kind in ("laundry", "mudroom") for i in col_a):
+        if s == "R" and has_shop and not any(i.kind == "laundry_mud" for i in col_a):
             col_a.insert(rng.randint(0, len(col_a)), Item("shop_link", "none"))
         if not col_a:
             # a wing always needs an outer column; give it a storage room
             col_a = [Item("storage")]
         plans.append(WingPlan(s, col_a, col_b, hall))
-    return plans
+    style = {
+        "kitchen": rng.choice(["back-left", "back-center", "back-center", "back-right"]),
+        "entry_end": rng.choice(["low", "high", "center"]),
+    }
+    return plans, style
+
+
+def _min_len(it: Item, rb: Rulebook) -> float:
+    m = rb.m(it.kind)
+    return m.min_d if it.door == "ensuite" else m.min_w
+
+
+def _rebalance(rng: random.Random, wings: dict, halls: dict, req: Requirements, rb: Rulebook) -> None:
+    """Move rooms out of columns that can't physically hold them (sum of minimum sizes
+    longer than the column) into columns that can."""
+    link = rb.b("link_width")
+
+    def total(w):
+        return req.living_length if w == "B" else req.building_width
+
+    def load(w, c):
+        groups = wings[w][c]
+        n = sum(_min_len(it, rb) for g in groups for it in g)
+        return n + (link if c == "B" and groups else 0)
+
+    def needs_ext(g):
+        return any(rb.m(i.kind).needs_exterior for i in g)
+
+    cols = [(w, c) for w in wings for c in ("A", "B") if c == "A" or halls[w]]
+    for _ in range(30):
+        over = [(w, c) for w, c in cols if load(w, c) > total(w) + EPS]
+        if not over:
+            return
+        w, c = over[0]
+        movable = [g for g in wings[w][c] if not any(i.kind.startswith("master_") for i in g)]
+        if not movable:
+            return
+        g = rng.choice(movable)
+        size = sum(_min_len(i, rb) for i in g)
+        targets = []
+        for w2, c2 in cols:
+            if (w2, c2) == (w, c):
+                continue
+            extra = link if (c2 == "B" and not wings[w2][c2]) else 0
+            if load(w2, c2) + size + extra > total(w2) + EPS:
+                continue
+            if c2 == "B" and needs_ext(g) and sum(needs_ext(x) for x in wings[w2]["B"]) >= 2:
+                continue  # only the two ends of an inner column reach an outside wall
+            targets.append((w2, c2))
+        if not targets:
+            return
+        w2, c2 = rng.choice(targets)
+        wings[w][c].remove(g)
+        wings[w2][c2].append(g)
 
 
 # ---------------------------------------------------------------------------
@@ -405,8 +464,9 @@ class Builder:
         return obs
 
     # -- main ------------------------------------------------------------------
-    def build(self, wings: dict[str, WingFit]) -> Layout:
+    def build(self, wings: dict[str, WingFit], style: Optional[dict] = None) -> Layout:
         req, rb, D = self.req, self.rb, self.D
+        self.style = style or {"kitchen": "back-center", "entry_end": "center"}
         lay = Layout(id="", length=self.L, width=D, living_length=self.living, shop_length=self.shop,
                      shop_side="right", requirements=req.model_dump())
         counters = Counter()
@@ -416,7 +476,9 @@ class Builder:
             gd = D - wf.width
             if not gm.fits(self.living, gd):
                 raise Invalid("great_room_width")
-            lay.spaces.append(Space("great_room", "great_room", gm.name, 0.0, 0.0, self.living, gd, door_side="S", column="G"))
+            # kitchen goes on the end wall so it keeps a window (company rule 6)
+            lay.spaces.append(Space("great_room", "great_room", gm.name, 0.0, 0.0, self.living, gd, door_side="E",
+                                    column="G", anchor=self.style["kitchen"]))
             self._add_rear_wing(lay, wf, gd, counters)
             return self._finish(lay)
         x = 0.0
@@ -429,7 +491,8 @@ class Builder:
             raise Invalid("great_room_width")
         if not gm.min_d - EPS <= D <= gm.max_d + EPS:
             raise Invalid("great_room_depth")
-        lay.spaces.append(Space("great_room", "great_room", gm.name, gx0, 0.0, gx1, D, door_side="S", column="G"))
+        lay.spaces.append(Space("great_room", "great_room", gm.name, gx0, 0.0, gx1, D, door_side="S", column="G",
+                                anchor=self.style["kitchen"]))
         if "R" in wings:
             self._add_wing(lay, wings["R"], gx1, counters)
         return self._finish(lay)
@@ -444,6 +507,7 @@ class Builder:
             lay.porches.append((0.0, D, self.living, D + req.back_porch_depth))
         lay.posts = self.posts()
         self._interior_doors(lay)
+        self._trim_halls(lay)
         self._exterior_doors(lay)
         self._windows(lay)
         return lay
@@ -534,29 +598,124 @@ class Builder:
         return None
 
     # -- doors ---------------------------------------------------------------
+    def _posts_to_jambs(self, lay: Layout, axis: str, fixed: float, c: float, width: float) -> None:
+        keep = []
+        for px, py in lay.posts:
+            along, at = (px, py) if axis == "x" else (py, px)
+            if abs(at - fixed) < EPS and c - width / 2 - self.post / 2 - EPS < along < c + width / 2 + self.post / 2 + EPS:
+                continue
+            keep.append((px, py))
+        for jamb in (c - width / 2 - self.post / 2, c + width / 2 + self.post / 2):
+            keep.append((jamb, fixed) if axis == "x" else (fixed, jamb))
+        lay.posts = sorted(set(keep))
+
+    def _is_post_obstacle(self, lay: Layout, ob: tuple[float, float], axis: str, fixed: float) -> bool:
+        mid = (ob[0] + ob[1]) / 2
+        return any(abs((px if axis == "x" else py) - mid) < EPS and abs((py if axis == "x" else px) - fixed) < EPS
+                   for px, py in lay.posts)
+
+    def _ref_point(self, lay: Layout, room: Space) -> tuple[float, float]:
+        """Where people arrive from: the wing's link to the great room, else the hall, else the great room."""
+        for kind in ("link", "hall"):
+            for sp in lay.spaces:
+                if sp.kind == kind and sp.wing == room.wing:
+                    return (sp.cx, sp.cy)
+        g = next(sp for sp in lay.spaces if sp.kind == "great_room")
+        return (g.cx, g.cy)
+
     def _door_on(self, lay: Layout, room: Space, other: Space, width: float, kind="interior", wall="int",
-                 prefer: Optional[float] = None) -> Door:
+                 prefer: Optional[float] = None, ref: Optional[tuple[float, float]] = None, leaves: int = 1) -> Door:
+        """Put a door on the wall between `room` and `other`.
+
+        Company rule 3: doors sit at the side of the wall (next to a corner), not in the middle.
+        The corner nearest to where people arrive from is used, unless another door already
+        sits there.
+        """
         e = shared_edge(room, other)
         if not e:
             raise Invalid("door_no_edge")
         axis, fixed, lo, hi = e
         if hi - lo < width + 0.5 - EPS:
             raise Invalid("door_too_tight")
-        pref = prefer if prefer is not None else (lo + hi) / 2
-        obstacles = []
-        if wall == "ext":
-            obstacles = self.wall_obstacles(lay, axis, fixed)
-        c = _place_on_wall(lo, hi, width, pref, obstacles, margin=0.25)
+        off = self.rb.b("door_corner_offset") + self.rb.b("int_wall") / 2
+        obstacles = self.wall_obstacles(lay, axis, fixed) if wall == "ext" else []
+        if prefer is not None:
+            prefs = [prefer]
+        else:
+            rlo, rhi = (room.y0, room.y1) if axis == "y" else (room.x0, room.x1)
+            end_lo = max(lo, rlo) + off + width / 2
+            end_hi = min(hi, rhi) - off - width / 2
+            r = ref or self._ref_point(lay, room)
+            target = r[1] if axis == "y" else r[0]
+            prefs = sorted([end_lo, end_hi], key=lambda c: abs(c - target)) + [(lo + hi) / 2]
+        existing = [d for d in lay.doors if d.serves == room.id or self._door_on_space(d, room)]
+        c = None
+        for pref in prefs:
+            cand = _place_on_wall(lo, hi, width, pref, obstacles, margin=min(off, (hi - lo - width) / 2))
+            if cand is None:
+                continue
+            pt = (fixed, cand) if axis == "y" else (cand, fixed)
+            if any(((d.x - pt[0]) ** 2 + (d.y - pt[1]) ** 2) ** 0.5 < (d.width + width) / 2 + 0.4 for d in existing):
+                continue
+            c = cand
+            break
         if c is None:
             raise Invalid("door_no_spot")
+        hinge = -1 if (c - lo) <= (hi - c) else 1
+        height = self.rb.b("door_height")
         if axis == "y":
             into = 1 if abs(room.x0 - fixed) < EPS else -1
-            d = Door(fixed, c, "y", width, kind, into=into, serves=room.id, wall=wall)
+            d = Door(fixed, c, "y", width, kind, into=into, hinge=hinge, serves=room.id, wall=wall, height=height, leaves=leaves)
         else:
             into = 1 if abs(room.y0 - fixed) < EPS else -1
-            d = Door(c, fixed, "x", width, kind, into=into, serves=room.id, wall=wall)
+            d = Door(c, fixed, "x", width, kind, into=into, hinge=hinge, serves=room.id, wall=wall, height=height, leaves=leaves)
         lay.doors.append(d)
         return d
+
+    @staticmethod
+    def _door_on_space(d: Door, sp: Space) -> bool:
+        if d.axis == "y":
+            return (abs(d.x - sp.x0) < EPS or abs(d.x - sp.x1) < EPS) and sp.y0 - EPS <= d.y <= sp.y1 + EPS
+        return (abs(d.y - sp.y0) < EPS or abs(d.y - sp.y1) < EPS) and sp.x0 - EPS <= d.x <= sp.x1 + EPS
+
+    def _trim_halls(self, lay: Layout) -> None:
+        """Company rule 9: hallway only as long as it needs to be; the dead ends become linen closets."""
+        for h in [sp for sp in lay.spaces if sp.kind == "hall"]:
+            along_y = h.h >= h.w
+            lo, hi = (h.y0, h.y1) if along_y else (h.x0, h.x1)
+            need = []
+            for d in lay.doors:
+                if self._door_on_space(d, h) and d.axis == ("y" if along_y else "x"):
+                    c = d.y if along_y else d.x
+                    need.append((c - d.width / 2 - 0.6, c + d.width / 2 + 0.6))
+            for sp in lay.spaces:
+                if sp is not h and sp.kind in ("link", "shop_link", "great_room", "shop"):
+                    e = shared_edge(sp, h)
+                    if e:
+                        need.append((e[2], e[3]))
+            if not need:
+                continue
+            n0 = max(lo, min(a for a, _ in need))
+            n1 = min(hi, max(b for _, b in need))
+            n0 = lo if n0 - lo < 3 else round(n0 * 2) / 2
+            n1 = hi if hi - n1 < 3 else round(n1 * 2) / 2
+            for a, b in ((lo, n0), (n1, hi)):
+                if b - a < 3 - EPS:
+                    continue
+                if along_y:
+                    closet = Space(f"{h.id}_linen{int(a)}", "storage", "Linen", h.x0, a, h.x1, b,
+                                   door_side="S" if a >= n1 - EPS else "N", wing=h.wing, column="H")
+                else:
+                    closet = Space(f"{h.id}_linen{int(a)}", "storage", "Linen", a, h.y0, b, h.y1,
+                                   door_side="W" if a >= n1 - EPS else "E", wing=h.wing, column="H")
+                lay.spaces.append(closet)
+            if along_y:
+                h.y0, h.y1 = n0, n1
+            else:
+                h.x0, h.x1 = n0, n1
+            for sp in [x for x in lay.spaces if x.kind == "storage" and x.id.startswith(f"{h.id}_linen")]:
+                if not any(d.serves == sp.id for d in lay.doors):
+                    self._door_on(lay, sp, h, self.rb.m("storage").door_w, prefer=None, ref=(h.cx, h.cy))
 
     def _interior_doors(self, lay: Layout) -> None:
         by_id = {s.id: s for s in lay.spaces}
@@ -567,9 +726,10 @@ class Builder:
                 continue
             m = self.rb.m(sp.kind)
             if it.door == "ensuite":
-                self._door_on(lay, sp, by_id[sp._partner], m.door_w)  # type: ignore[attr-defined]
+                partner = by_id[sp._partner]  # type: ignore[attr-defined]
+                self._door_on(lay, sp, partner, m.door_w, ref=self._ref_point(lay, partner))
             elif it.door == "great":
-                self._door_on(lay, sp, great, m.door_w)
+                self._door_on(lay, sp, great, m.door_w, ref=(great.cx, great.cy))
             else:
                 hall = by_id.get(f"{sp.wing}_hall", great)
                 self._door_on(lay, sp, hall, m.door_w)
@@ -577,7 +737,7 @@ class Builder:
         if self.shop > 0:
             shop = by_id["shop"]
             ew = self.rb.b("ext_door_w")
-            prio = {"mudroom": 0, "laundry": 1, "hall": 2, "shop_link": 3, "great_room": 4}
+            prio = {"laundry_mud": 0, "hall": 2, "shop_link": 3, "great_room": 4}
             cands = []
             for s in lay.spaces:
                 e = shared_edge(s, shop) if s.kind in prio else None
@@ -586,24 +746,36 @@ class Builder:
             if not cands:
                 raise Invalid("no_shop_access")
             pick = sorted(cands, key=lambda s: prio[s.kind])[0]
-            self._door_on(lay, pick, shop, ew, kind="interior", wall="shop",
-                          prefer=self.D * 0.3 if pick.kind == "great_room" else None)
+            self._door_on(lay, pick, shop, ew, kind="interior", wall="shop", ref=(shop.cx, 0.0))
 
     def _exterior_doors(self, lay: Layout) -> None:
         g = lay.space("great_room")
         ew = self.rb.b("ext_door_w")
-        # front door
-        c = _place_on_wall(g.x0, g.x1, ew, g.cx, self.wall_obstacles(lay, "x", 0.0), margin=0.75)
+        dh = self.rb.b("door_height")
+        # main entrance (company rule 5): single 3' or double 6', near the side of the living wall (rule 3)
+        double = self.req.main_entrance == "double"
+        mw = self.rb.b("entry_double_w") if double else self.rb.b("entry_single_w")
+        end = self.style.get("entry_end", "center")
+        pref = {"low": g.x0 + 2 + mw / 2, "high": g.x1 - 2 - mw / 2}.get(end, g.cx)
+        c = _place_on_wall(g.x0, g.x1, mw, pref, self.wall_obstacles(lay, "x", 0.0), margin=0.75)
         if c is None:
-            raise Invalid("front_door")
-        lay.doors.append(Door(c, 0.0, "x", ew, "exterior", into=1, serves="great_room", wall="ext"))
+            # no gap between posts: frame a header and move the post(s) to the door jambs
+            c = _place_on_wall(g.x0, g.x1, mw, pref, [o for o in self.wall_obstacles(lay, "x", 0.0)
+                                                      if not self._is_post_obstacle(lay, o, "x", 0.0)], margin=0.75)
+            if c is None:
+                raise Invalid("front_door")
+            self._posts_to_jambs(lay, "x", 0.0, c, mw)
+            lay.notes.append("Main entrance gets a framed header; the post moves to the door jamb.")
+        lay.doors.append(Door(c, 0.0, "x", mw, "exterior", into=1, serves="great_room", wall="ext", height=dh,
+                              leaves=2 if double else 1, hinge=-1 if c < g.cx else 1))
         # back door (only if the kitchen leaves room for it)
         if g.w >= 19.5:
             obs = self.wall_obstacles(lay, "x", self.D)
             for lo, hi, pref in ((g.x0, min(g.x0 + 4.5, g.x1), g.x0 + 2.4), (max(g.x1 - 4.5, g.x0), g.x1, g.x1 - 2.4)):
                 c = _place_on_wall(lo, hi, ew, pref, obs, margin=0.4)
                 if c is not None:
-                    lay.doors.append(Door(c, self.D, "x", ew, "exterior", into=-1, hinge=1, serves="great_room", wall="ext"))
+                    lay.doors.append(Door(c, self.D, "x", ew, "exterior", into=-1, hinge=1 if c < g.cx else -1,
+                                          serves="great_room", wall="ext", height=dh))
                     break
         if not any(d.kind == "exterior" and d.serves == "great_room" and d.y == self.D for d in lay.doors):
             for h in [s for s in lay.spaces if s.kind == "hall"]:
@@ -613,7 +785,8 @@ class Builder:
                         fx = 0.0 if side == "W" else self.L
                         c = _place_on_wall(h.y0, h.y1, ew, h.cy, self.wall_obstacles(lay, "y", fx), margin=0.25)
                         if c is not None:
-                            lay.doors.append(Door(fx, c, "y", ew, "exterior", into=1 if side == "W" else -1, serves=h.id, wall="ext"))
+                            lay.doors.append(Door(fx, c, "y", ew, "exterior", into=1 if side == "W" else -1, serves=h.id,
+                                                  wall="ext", height=dh))
                             done = True
                             break
                 if done:
@@ -638,29 +811,22 @@ class Builder:
             span = (hi - lo) / max(n, 1)
             for i in range(n):
                 c = lo + span * (i + 0.5)
+                ohh = self.rb.b("overhead_door_h")
                 if axis == "x":
-                    lay.doors.append(Door(c, fixed, "x", ohw, "overhead", into=1, serves="shop", wall="ext"))
+                    lay.doors.append(Door(c, fixed, "x", ohw, "overhead", into=1, serves="shop", wall="ext", height=ohh))
                 else:
-                    lay.doors.append(Door(fixed, c, "y", ohw, "overhead", into=-1, serves="shop", wall="ext"))
-                # relocate posts out of the opening to the jambs
-                keep = []
-                for px, py in lay.posts:
-                    along, at = (px, py) if axis == "x" else (py, px)
-                    if abs(at - fixed) < EPS and c - ohw / 2 - EPS < along < c + ohw / 2 + EPS:
-                        continue
-                    keep.append((px, py))
-                for jamb in (c - ohw / 2 - self.post / 2, c + ohw / 2 + self.post / 2):
-                    keep.append((jamb, fixed) if axis == "x" else (fixed, jamb))
-                lay.posts = sorted(set(keep))
+                    lay.doors.append(Door(fixed, c, "y", ohw, "overhead", into=-1, serves="shop", wall="ext", height=ohh))
+                self._posts_to_jambs(lay, axis, fixed, c, ohw)
         # man door: front wall, else end wall
         placed = False
         for axis, fixed, lo, hi in (("x", 0.0, x0, x1), ("y", self.L, 0.0, self.D), ("x", self.D, x0, x1)):
-            c = _place_on_wall(lo, hi, ew, (lo + hi) / 2, self.wall_obstacles(lay, axis, fixed), margin=0.75)
+            c = _place_on_wall(lo, hi, ew, lo + 2 + ew / 2, self.wall_obstacles(lay, axis, fixed), margin=0.75)
             if c is not None:
                 if axis == "x":
-                    lay.doors.append(Door(c, fixed, "x", ew, "exterior", into=1 if fixed == 0 else -1, serves="shop", wall="ext"))
+                    lay.doors.append(Door(c, fixed, "x", ew, "exterior", into=1 if fixed == 0 else -1, serves="shop",
+                                          wall="ext", height=dh))
                 else:
-                    lay.doors.append(Door(fixed, c, "y", ew, "exterior", into=-1, serves="shop", wall="ext"))
+                    lay.doors.append(Door(fixed, c, "y", ew, "exterior", into=-1, serves="shop", wall="ext", height=dh))
                 placed = True
                 break
         if not placed:
@@ -681,47 +847,73 @@ class Builder:
         segs.sort(key=lambda s: s[3] - s[2], reverse=True)
         return segs
 
+    def _seg_side(self, seg) -> str:
+        axis, fixed = seg[0], seg[1]
+        if axis == "x":
+            return "S" if abs(fixed) < EPS else "N"
+        return "W" if abs(fixed) < EPS else "E"
+
     def _windows(self, lay: Layout) -> None:
+        """Company rules 4 + 6: standard 3x4 windows, doubles in the primary bedroom, living
+        area and kitchen; bedrooms, kitchen, office and living always get windows."""
+        ww, wh = self.rb.b("window_w"), self.rb.b("window_h")
         for sp in lay.spaces:
             if sp.kind in ("hall", "link", "shop_link"):
                 continue
             if sp.kind == "shop":
-                count, ww, needs = 2, 3.0, False
+                count, units, needs = 2, 1, False
             else:
                 m = self.rb.m(sp.kind)
-                count, ww, needs = m.windows, m.window_w, m.needs_exterior
+                count, units, needs = m.windows, m.window_units, m.needs_exterior
             segs = self._exterior_segments(lay, sp)
             if not segs:
                 if needs:
                     raise Invalid("no_exterior_wall")
                 continue
-            if count <= 0 or ww <= 0:
+            if count <= 0:
                 continue
-            # spread windows over the exterior sides, longest first
-            alloc = [0] * len(segs)
-            for i in range(count):
-                alloc[i % len(segs)] += 1
+            width = ww * units
+            plan = []  # (segment, preferred position)
             if sp.kind == "great_room":
-                # kitchen back wall gets one window over the sink, rest on the front
+                ks = OPPOSITE[sp.door_side or "S"]
+                kseg = [g for g in segs if self._seg_side(g) == ks]
+                lsegs = sorted([g for g in segs if self._seg_side(g) != ks],
+                               key=lambda g: (self._seg_side(g) != "S", -(g[3] - g[2])))
+                if not kseg or not lsegs:
+                    raise Invalid("kitchen_or_living_window")
+                gm = self.rb.m("great_room")
+                ins, theta = placement(sp, sp.door_side, gm.min_w, gm.min_d, sp.anchor or gm.fixture_anchor,
+                                       lay.exterior_sides(sp), self.rb.b("ext_wall"), self.rb.b("int_wall"))
+                t = math.radians(theta)
+                sx = ins[0] + (gm.min_w / 2) * math.cos(t) - gm.min_d * math.sin(t)
+                sy = ins[1] + (gm.min_w / 2) * math.sin(t) + gm.min_d * math.cos(t)
+                k = kseg[0]
+                plan.append((k, sx if k[0] == "x" else sy))           # over the kitchen sink
+                # living windows: front wall first, then the other outside walls
+                n_living = max(1, count - 1)
+                per_seg = [0] * len(lsegs)
+                for i in range(n_living):
+                    per_seg[0 if (i < 2 or len(lsegs) == 1) else 1 + (i - 2) % (len(lsegs) - 1)] += 1
+                for g, n in zip(lsegs, per_seg):
+                    for i in range(n):
+                        plan.append((g, g[2] + (g[3] - g[2]) * (i + 1) / (n + 1)))
+            else:
                 alloc = [0] * len(segs)
-                front = [i for i, s in enumerate(segs) if s[0] == "x" and s[1] == 0.0]
-                back = [i for i, s in enumerate(segs) if s[0] == "x" and s[1] == self.D]
-                if front:
-                    alloc[front[0]] += max(1, count - 1)
-                if back:
-                    alloc[back[0]] += 1
+                for i in range(count):
+                    alloc[i % len(segs)] += 1
+                for g, k in zip(segs, alloc):
+                    for i in range(k):
+                        plan.append((g, g[2] + (g[3] - g[2]) * (i + 1) / (k + 1)))
             placed = 0
-            for (axis, fixed, lo, hi), k in zip(segs, alloc):
-                for i in range(k):
-                    pref = lo + (hi - lo) * (i + 1) / (k + 1)
-                    c = _place_on_wall(lo, hi, ww, pref, self.wall_obstacles(lay, axis, fixed), margin=0.75)
-                    if c is None:
-                        continue
-                    if axis == "x":
-                        lay.windows.append(Window(c, fixed, "x", ww, sp.id))
-                    else:
-                        lay.windows.append(Window(fixed, c, "y", ww, sp.id))
-                    placed += 1
+            for (axis, fixed, lo, hi), pref in plan:
+                c = _place_on_wall(lo, hi, width, pref, self.wall_obstacles(lay, axis, fixed), margin=0.5)
+                if c is None:
+                    continue
+                if axis == "x":
+                    lay.windows.append(Window(c, fixed, "x", width, sp.id, height=wh, units=units))
+                else:
+                    lay.windows.append(Window(fixed, c, "y", width, sp.id, height=wh, units=units))
+                placed += 1
             if needs and placed == 0:
                 raise Invalid("no_egress_window")
 
@@ -757,7 +949,7 @@ def score_layout(lay: Layout, req: Requirements, rb: Rulebook) -> None:
     br["great_room"] = great_room_score(g.w, g.h, gm)
     living_area = lay.living_length * lay.width
     circ = sum(s.area for s in lay.spaces if s.kind in ("hall", "link", "shop_link"))
-    br["circulation"] = -(circ / living_area) * 25
+    br["circulation"] = -(circ / living_area) * 45   # company rule 9: fewer walkways
     storage = sum(s.area for s in lay.spaces if s.kind == "storage")
     br["leftover_storage"] = -(storage / living_area) * 30
     # 3. plumbing: wet rooms sharing walls or stacked across the hall
@@ -812,7 +1004,7 @@ def score_layout(lay: Layout, req: Requirements, rb: Rulebook) -> None:
             continue
         if room.kind in ("bedroom", "master_bedroom") and room.wing and not any(s.kind == "hall" and s.wing == room.wing for s in lay.spaces):
             open_beds += 1
-    br["privacy"] = -0.6 * open_beds
+    br["privacy"] = -0.2 * open_beds  # company rule 2 allows rooms to open straight into the great room
     raw = sum(br.values())
     lay.score_breakdown = {k: round(v, 2) for k, v in br.items()}
     lay.score = round(max(1.0, min(99.0, 60 + raw * 2.2)), 1)
@@ -857,7 +1049,29 @@ def _signature(wings: dict[str, WingFit]) -> str:
 def _family(lay: Layout) -> str:
     mb = next(s for s in lay.spaces if s.kind == "master_bedroom")
     sides = "".join(sorted({s.wing for s in lay.spaces if s.wing}))
-    return f"{sides}:{mb.wing}"
+    halls = "".join(sorted(s.wing for s in lay.spaces if s.kind == "hall"))
+    return f"{sides}:{mb.wing}:{halls}"
+
+
+def _concept(lay: Layout) -> str:
+    wings = sorted({s.wing for s in lay.spaces if s.wing and s.kind not in ("storage",)})
+    halls = [s for s in lay.spaces if s.kind == "hall"]
+    mb = next(s for s in lay.spaces if s.kind == "master_bedroom")
+    beds = [s for s in lay.spaces if s.kind == "bedroom"]
+    if wings == ["B"]:
+        base = "Rear bedroom wing"
+    elif len(wings) == 2:
+        base = "Split plan" if beds and all(b.wing != mb.wing for b in beds) else "Two-wing plan"
+    else:
+        base = "Single bedroom wing"
+    flow = "open flow, rooms open to the great room" if not halls else (
+        "short hallway" if all(min(h.w, h.h) * max(h.w, h.h) < 120 for h in halls) else "private hallway")
+    g = lay.space("great_room")
+    a = g.anchor or "back-center"
+    kitchen = {"back-left": "corner kitchen", "back-right": "corner kitchen"}.get(a, "centered kitchen")
+    if g.door_side in ("E", "W"):
+        kitchen = "kitchen on the end wall"
+    return f"{base} - {flow}, {kitchen}"
 
 
 # ---------------------------------------------------------------------------
@@ -913,7 +1127,7 @@ def _search(req: Requirements, rb: Rulebook, rng: random.Random, trials: int, ex
     best: dict[str, Layout] = {}
     builder = Builder(req, rb)
     for _ in range(trials):
-        plans = random_plan(rng, req, rb, extra_flex)
+        plans, style = random_plan(rng, req, rb, extra_flex)
         fits = {}
         ok = True
         for p in plans:
@@ -956,12 +1170,22 @@ def _search(req: Requirements, rb: Rulebook, rng: random.Random, trials: int, ex
             wings = {f.side: f for f in combo}
             sig = _signature(wings)
             try:
-                lay = builder.build(wings)
+                lay = builder.build(wings, style)
             except Invalid as e:
                 reasons[str(e)] += 1
                 continue
+            checks = check_layout(lay, rb, with_estimate=False)
+            failed = hard_failures(checks)
+            if failed:
+                for f in failed:
+                    reasons[f"rule {f['id']}"] += 1
+                continue
             score_layout(lay, req, rb)
-            sig = f"{sig} a{'/'.join(str(f.a.depth) for f in combo)}"
+            warns = sum(1 for c in checks if c["status"] == "warn")
+            if warns:
+                lay.score_breakdown["rule_warnings"] = -3.0 * warns
+                lay.score = round(max(1.0, lay.score - 3.0 * 2.2 * warns), 1)
+            sig = f"{sig} k{style['kitchen']} e{style['entry_end']} a{'/'.join(str(f.a.depth) for f in combo)}"
             lay.signature = sig
             if sig not in best or best[sig].score < lay.score:
                 best[sig] = lay
@@ -977,9 +1201,9 @@ def _pick(req: Requirements, rb: Rulebook, best: dict[str, Layout], count: int, 
     picked: list[Layout] = []
     fam_count: Counter = Counter()
     struct_seen: set[str] = set()
-    for lay in ranked:  # diversity: at most 2 per family, distinct room structures
-        struct = lay.signature.split(" a")[0]
-        if struct in struct_seen or fam_count[_family(lay)] >= 2:
+    for lay in ranked:  # diversity first: one option per design family, then fill
+        struct = lay.signature.split(" k")[0]
+        if struct in struct_seen or fam_count[_family(lay)] >= 1:
             continue
         picked.append(lay)
         struct_seen.add(struct)
@@ -989,9 +1213,9 @@ def _pick(req: Requirements, rb: Rulebook, best: dict[str, Layout], count: int, 
     for lay in ranked:
         if len(picked) >= count:
             break
-        if lay not in picked and lay.signature.split(" a")[0] not in struct_seen:
+        if lay not in picked and lay.signature.split(" k")[0] not in struct_seen:
             picked.append(lay)
-            struct_seen.add(lay.signature.split(" a")[0])
+            struct_seen.add(lay.signature.split(" k")[0])
     picked.sort(key=lambda l: l.score, reverse=True)
     fp = req.fingerprint()
     from .estimate import estimate_cost  # local import to avoid a cycle
@@ -1003,6 +1227,8 @@ def _pick(req: Requirements, rb: Rulebook, best: dict[str, Layout], count: int, 
         lay.notes = extra_notes + lay.notes
         compute_metrics(lay, req, rb)
         lay.estimate = estimate_cost(lay, rb)
+        lay.concept = _concept(lay)
+        lay.rule_checks = check_layout(lay, rb, with_estimate=True)
         for s in lay.spaces:
             for attr in ("_item", "_partner"):
                 if hasattr(s, attr):
@@ -1020,6 +1246,8 @@ def _explain_failure(req: Requirements, reasons: Counter) -> str:
         "rooms_do_not_fit_depth": "The rooms don't stack across the building width. Try a different building width or fewer rooms.",
         "no_egress_window": "Some bedrooms can't get an egress window. Try fewer bedrooms or no shop on that side.",
         "no_exterior_wall": "Some bedrooms can't reach an outside wall. Try fewer bedrooms or a longer building.",
+        "rule 7": "Bedrooms can't reach the 12' x 12' minimum in this building. Try a bigger building or fewer bedrooms.",
+        "rule 8": "Bathrooms can't reach the 5'-4\" minimum width here. Try a bigger building.",
     }
     return (f"No valid layout found for {req.building_width:g}' x {req.building_length:g}' with "
             f"{req.bedrooms} bed / {req.full_baths} bath"

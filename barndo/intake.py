@@ -35,6 +35,9 @@ class IntakeExtraction(BaseModel):
     shop_length: Optional[float] = Field(None, description="Feet of building length used as shop/garage, 0 for none")
     shop_side: Optional[Literal["left", "right"]] = None
     overhead_doors: Optional[int] = None
+    main_entrance: Optional[Literal["single", "double"]] = Field(None, description="Main entry door: single 3' or double 6'")
+    eave_height: Optional[float] = Field(None, description="Eave / sidewall height in feet (company standard 12)")
+    roof_pitch: Optional[float] = Field(None, description="Roof slope as rise per 12, e.g. 4 for 4:12 (company standard 4)")
     front_porch_depth: Optional[float] = None
     back_porch_depth: Optional[float] = None
     budget: Optional[float] = Field(None, description="Total budget in US dollars")
@@ -55,6 +58,9 @@ Read the customer's message and fill in the requirement fields. Rules:
   If they want a shop but give no size, infer a reasonable length (20-30 ft) and say so in assumptions.
   If they give the shop as square feet, convert using the building width when known.
 - "2.5 baths" means full_baths=2 and half_baths=1.
+- Laundry and mudroom are always built as one combined room; set laundry=true if either is wanted.
+- Only set eave_height / roof_pitch / main_entrance if the customer asks for something specific
+  (company standard is a 12 ft eave, 4:12 slope, single 3 ft entry door).
 - Porch depth: typical covered porches are 8-12 ft deep. "Wraparound" porch -> front porch 10 and note it.
 - Keep notes short and factual. Ask at most 3 follow-up questions, only about things that change the layout
   (size, bedrooms, bathrooms, shop).
@@ -141,6 +147,16 @@ def extract_with_rules(text: str) -> IntakeExtraction:
                         ("laundry", "laundry")):
         if re.search(word, t):
             setattr(out, field, True)
+    if re.search(r"double (front |entry |entrance )?doors?|french doors?", t):
+        out.main_entrance = "double"
+    m = re.search(r"(\d{1,2})\s*(?:'|ft|foot|feet)?\s*(?:eaves?|sidewalls?|walls? height)", t)
+    if m:
+        out.eave_height = float(m.group(1))
+    m = re.search(r"(\d{1,2}(?:\.\d)?)\s*(?::|/|in)\s*12\b", t)
+    if m:
+        out.roof_pitch = float(m.group(1))
+    if out.mudroom and not out.laundry:
+        out.laundry = True
     if re.search(r"no (walk[- ]in|wic)", t):
         out.walk_in_closet = False
     m = re.search(r"(\d{2,3})\s*(?:'|ft|feet)?\s*(?:x|by)\s*(\d{2,3})\s*(?:ft\s*)?(?:shop|garage)", t)

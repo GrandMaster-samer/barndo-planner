@@ -27,6 +27,7 @@ class Space:
     x1: float
     y1: float
     door_side: Optional[str] = None   # side of the room's main entry (defines module orientation)
+    anchor: str = ""                  # override of the module's fixture anchor (layout variants)
     column: str = ""                  # A / B / H / G / S - for debugging & tests
     wing: str = ""                    # L / R
 
@@ -68,6 +69,8 @@ class Door:
     hinge: int = -1          # -1 hinge at the low end, +1 at the high end
     serves: str = ""         # space id
     wall: str = "int"        # int | ext | shop
+    height: float = 6.667
+    leaves: int = 1          # 2 = double door
 
 
 @dataclass
@@ -77,6 +80,8 @@ class Window:
     axis: str
     width: float
     serves: str = ""
+    height: float = 4.0
+    units: int = 1           # 2 = double (pair of standard windows)
 
 
 @dataclass
@@ -99,6 +104,8 @@ class Layout:
     notes: list[str] = field(default_factory=list)
     signature: str = ""
     requirements: dict[str, Any] = field(default_factory=dict)
+    concept: str = ""
+    rule_checks: list[dict[str, Any]] = field(default_factory=list)
 
     # -- helpers ----------------------------------------------------------
     def space(self, sid: str) -> Space:
@@ -188,7 +195,7 @@ def fmt_ft(v: float) -> str:
     return f"{ft}'-{inch}\""
 
 
-def clear_dims(layout: Layout, s: Space, ext: float = 0.67, intw: float = 0.375) -> tuple[float, float]:
+def clear_dims(layout: Layout, s: Space, ext: float = 0.5, intw: float = 0.333) -> tuple[float, float]:
     """Approximate clear (finished) room dimensions after wall thickness."""
     ext_sides = set(layout.exterior_sides(s))
     w, h = s.w, s.h

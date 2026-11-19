@@ -59,6 +59,21 @@ def _opening_box(lay: Layout, x, y, axis, width, ext, t):
     return box(x - t / 2 - 0.1, y - width / 2, x + t / 2 + 0.1, y + width / 2)
 
 
+def door_leaves(d, ext: float, L: float, D: float):
+    """List of (hinge, leaf_end, closed_end) - one per leaf (double doors have two)."""
+    from dataclasses import replace
+    if getattr(d, "leaves", 1) == 2:
+        q = d.width / 4
+        if d.axis == "x":
+            a = replace(d, x=d.x - q, width=d.width / 2, hinge=-1, leaves=1)
+            b = replace(d, x=d.x + q, width=d.width / 2, hinge=1, leaves=1)
+        else:
+            a = replace(d, y=d.y - q, width=d.width / 2, hinge=-1, leaves=1)
+            b = replace(d, y=d.y + q, width=d.width / 2, hinge=1, leaves=1)
+        return [door_symbol(a, ext, L, D), door_symbol(b, ext, L, D)]
+    return [door_symbol(d, ext, L, D)]
+
+
 def door_symbol(d, ext: float, L: float, D: float):
     """Return (hinge, leaf_end, closed_end) in feet for a swing door."""
     off = 0.0
@@ -86,7 +101,7 @@ def fixture_placements(lay: Layout, rb: Rulebook):
         prims = load_primitives(m.dxf_path)
         if not prims:
             continue
-        ins, theta = placement(s, s.door_side, m.min_w, m.min_d, m.fixture_anchor, lay.exterior_sides(s),
+        ins, theta = placement(s, s.door_side, m.min_w, m.min_d, s.anchor or m.fixture_anchor, lay.exterior_sides(s),
                                rb.b("ext_wall"), rb.b("int_wall"))
         yield s, m, ins, theta, prims
 
@@ -231,12 +246,12 @@ def render_svg(lay: Layout, rb: Rulebook, scale: float = 11.0, show_fixtures: bo
                         stroke="#555", stroke_width=1, stroke_dasharray="4 3")
                 cv.text(inner - 1.8, d.y, f"{fmt_ft(d.width)} OH", size=font * 0.8, fill="#555", rotate=-90)
             continue
-        hinge, leaf, closed = door_symbol(d, ext, L, D)
-        cv.line(hinge, leaf, stroke="#3d342c", stroke_width=1.3)
-        r = d.width * cv.s
-        sweep = _sweep(hinge, leaf, closed)
-        cv.add(f'<path d="M{cv.X(leaf[0])},{cv.Y(leaf[1])} A{r},{r} 0 0 {sweep} {cv.X(closed[0])},{cv.Y(closed[1])}" '
-               f'fill="none" stroke="#3d342c" stroke-width="0.7" stroke-dasharray="2 2"/>')
+        for hinge, leaf, closed in door_leaves(d, ext, L, D):
+            cv.line(hinge, leaf, stroke="#3d342c", stroke_width=1.3)
+            r = ((leaf[0] - hinge[0]) ** 2 + (leaf[1] - hinge[1]) ** 2) ** 0.5 * cv.s
+            sweep = _sweep(hinge, leaf, closed)
+            cv.add(f'<path d="M{cv.X(leaf[0])},{cv.Y(leaf[1])} A{r},{r} 0 0 {sweep} {cv.X(closed[0])},{cv.Y(closed[1])}" '
+                   f'fill="none" stroke="#3d342c" stroke-width="0.7" stroke-dasharray="2 2"/>')
 
     # posts
     if show_posts:

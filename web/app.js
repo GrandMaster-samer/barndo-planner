@@ -31,6 +31,7 @@ function fillForm(req) {
   for (const [k, v] of Object.entries(req)) {
     const el = form.elements[k];
     if (!el) continue;
+    if (k === 'laundry') { el.checked = !!(req.laundry || req.mudroom); continue; }
     if (el.type === 'checkbox') el.checked = !!v;
     else el.value = v ?? '';
   }
@@ -40,12 +41,14 @@ function readForm() {
   const f = form.elements;
   const num = (n, d = 0) => (f[n].value === '' ? d : Number(f[n].value));
   let w = num('building_width', 40), l = num('building_length', 60);
-  if ($('#footprint').value !== 'custom') [w, l] = $('#footprint').value.split('x').map(Number);
+  const fp = $('#footprint').value;
+  if (fp && fp !== 'custom') [w, l] = fp.split('x').map(Number);
   return {
     building_width: w, building_length: l,
     bedrooms: num('bedrooms', 3), full_baths: num('full_baths', 2), half_baths: num('half_baths', 0),
     walk_in_closet: f.walk_in_closet.checked, laundry: f.laundry.checked, pantry: f.pantry.checked,
-    mudroom: f.mudroom.checked, office: f.office.checked,
+    mudroom: f.laundry.checked, office: f.office.checked,
+    main_entrance: f.main_entrance.value, eave_height: num('eave_height', 12), roof_pitch: num('roof_pitch', 4),
     shop_length: num('shop_length', 0), shop_side: f.shop_side.value, overhead_doors: num('overhead_doors', 1),
     front_porch_depth: num('front_porch_depth', 0), back_porch_depth: num('back_porch_depth', 0),
     budget: f.budget.value === '' ? null : Number(f.budget.value), notes: f.notes.value,
@@ -54,6 +57,7 @@ function readForm() {
 
 // ---------------------------------------------------------------- init
 async function init() {
+  for (const b of ['#btn-describe', '#btn-generate']) $(b).disabled = true;
   CONFIG = await api('/api/config');
   $('#company').textContent = CONFIG.company;
   document.title = `${CONFIG.company} - Barndo Planner`;
@@ -62,6 +66,7 @@ async function init() {
   sel.add(new Option('Custom size...', 'custom'));
   sel.addEventListener('change', () => { $('#custom-size').hidden = sel.value !== 'custom'; });
   fillForm(CONFIG.defaults);
+  for (const b of ['#btn-describe', '#btn-generate']) $(b).disabled = false;
   if (CONFIG.dwg) $('#d-dwg').hidden = false;
 }
 
@@ -121,7 +126,8 @@ function renderGrid(layouts) {
       `<span class="chip">${m.living_sqft.toLocaleString()} sq ft living</span>`,
       m.shop_sqft ? `<span class="chip">${m.shop_sqft.toLocaleString()} sq ft shop</span>` : '',
       `<span class="chip">${m.bedrooms} bed / ${m.full_baths}${m.half_baths ? '.5' : ''} bath</span>`,
-      m.split_plan ? '<span class="chip good">Split plan</span>' : '',
+      l.rules ? `<span class="chip ${l.rules.failed ? 'bad' : 'good'}">&#10003; ${l.rules.passed}/${l.rules.total} company rules</span>` : '',
+      l.rules && l.rules.warnings ? `<span class="chip warn">${l.rules.warnings} warning${l.rules.warnings > 1 ? 's' : ''}</span>` : '',
       e.within_budget === true ? '<span class="chip good">Within budget</span>' : '',
       e.within_budget === false ? '<span class="chip bad">Over budget</span>' : '',
     ].join('');
@@ -129,6 +135,7 @@ function renderGrid(layouts) {
       <div class="thumb">${l.svg}</div>
       <div class="meta">
         <div class="line1"><span class="name">Option ${i + 1}</span><span class="price">${money(e.total)}</span></div>
+        <div class="concept">${esc(l.concept || '')}</div>
         <div class="chips">${chips}</div>
         <div class="score">Design score ${l.score} / 100 &middot; Great room ${m.great_room}</div>
         ${l.notes.length ? `<div class="small">${l.notes.map(esc).join(' ')}</div>` : ''}
@@ -145,6 +152,7 @@ async function openDetail(id, n) {
   current = id;
   const dlg = $('#detail');
   $('#d-title').textContent = `Option ${n}`;
+  $('#d-rules').innerHTML = '';
   $('#d-plan').innerHTML = '<p class="small">Loading...</p>';
   $('#d-summary').textContent = '';
   show($('#lead-msg'), '');
@@ -155,7 +163,12 @@ async function openDetail(id, n) {
   $('#d-kpis').innerHTML = [
     [m.footprint, 'building'], [m.living_sqft.toLocaleString(), 'living sq ft'], [m.shop_sqft.toLocaleString(), 'shop sq ft'],
     [`${m.bedrooms} / ${m.full_baths}${m.half_baths ? '.5' : ''}`, 'bed / bath'], [m.great_room, 'great room'], [money(e.total), 'estimate'],
+    [`${e.building.eave_height}'`, 'eave height'], [`${e.building.roof_pitch}:12`, 'roof slope'], [`${e.building.ridge_height.toFixed(1)}'`, 'ridge height'],
   ].map(([b, s]) => `<div><b>${esc(String(b))}</b><span>${s}</span></div>`).join('');
+  $('#d-title').textContent = `Option ${n} - ${l.concept || ''}`;
+  $('#d-rules').innerHTML = (l.rule_checks || []).map((r) =>
+    `<li class="${r.status}"><span class="mark">${r.status === 'pass' ? '&#10003;' : r.status === 'warn' ? '!' : '&#10007;'}</span>`
+    + `<span><b>${esc(r.id)}. ${esc(r.rule)}</b><br><small>${esc(r.detail)}</small></span></li>`).join('');
   $('#d-notes').innerHTML = l.notes.length ? `<div class="msg">${l.notes.map(esc).join('<br>')}</div>` : '';
   $('#d-est').innerHTML = Object.entries(e.groups).map(([g, v]) => `<tr><td>${esc(g)}</td><td class="n">${money(v)}</td></tr>`).join('')
     + `<tr><td>Contingency</td><td class="n">${money(e.contingency)}</td></tr>`

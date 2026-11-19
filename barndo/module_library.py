@@ -12,7 +12,10 @@ MODULE DRAWING STANDARD (give this to your drafters)
   y = min_d. Put beds, tubs, counters against the back wall.
 * Everything must fit inside the 0..min_w*12 x 0..min_d*12 box.
 * Layers: FIXTURE (plumbing, cabinets, appliances) and FURNITURE.
-* Allowed entities: LINE, LWPOLYLINE, CIRCLE, ARC, TEXT (blocks are exploded).
+* Allowed entities: LINE, LWPOLYLINE, CIRCLE, ARC, TEXT, INSERT.
+* Draw fixtures as BLOCKS with descriptive names - the Company Rules read them.
+  A full bath must contain blocks named like SINK (or LAV/VANITY), TOILET (or WC)
+  and SHOWER.
 
 Run `python -m barndo validate-modules` to check a library.
 """
@@ -38,92 +41,155 @@ def _rect(msp, x0, y0, x1, y1, layer="FIXTURE"):
     msp.add_lwpolyline([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], close=True, dxfattribs={"layer": layer})
 
 
-def _toilet(msp, cx, back_y):
-    _rect(msp, cx - 10, back_y - 8, cx + 10, back_y)
-    msp.add_ellipse((cx, back_y - 18), major_axis=(0, 9), ratio=0.75, dxfattribs={"layer": "FIXTURE"})
+# Fixture blocks: origin = bottom-left of the fixture footprint, the side that goes
+# against the wall is at the TOP (y = depth). Block names are what the Company Rules
+# look for (e.g. a full bath must contain SINK, TOILET and SHOWER blocks).
+def _blk_toilet(b):
+    _rect(b, 0, 20, 20, 28)
+    b.add_ellipse((10, 10), major_axis=(0, 9.5), ratio=0.75, dxfattribs={"layer": "FIXTURE"})
 
 
-def _draw(module_id: str, msp, W: float, D: float) -> None:
-    """W, D = min box in inches."""
+def _blk_sink(b):
+    _rect(b, 0, 0, 24, 21)
+    b.add_ellipse((12, 10), major_axis=(7, 0), ratio=0.7, dxfattribs={"layer": "FIXTURE"})
+
+
+def _blk_shower(b):
+    _rect(b, 0, 0, 36, 36)
+    _rect(b, 2, 2, 34, 34)
+    b.add_circle((18, 18), 1.5, dxfattribs={"layer": "FIXTURE"})
+    b.add_line((2, 2), (34, 34), dxfattribs={"layer": "FIXTURE"})
+    b.add_line((2, 34), (34, 2), dxfattribs={"layer": "FIXTURE"})
+
+
+def _blk_appliance(b, w=27, d=28):
+    _rect(b, 0, 0, w, d)
+    b.add_circle((w / 2, d / 2 - 1), min(w, d) / 3, dxfattribs={"layer": "FIXTURE"})
+
+
+def _blk_bed(w):
+    def f(b):
+        _rect(b, 0, 0, w, 80, "FURNITURE")
+        b.add_line((0, 60), (w, 60), dxfattribs={"layer": "FURNITURE"})
+        half = w / 2
+        _rect(b, 4, 66, half - 3, 76, "FURNITURE")
+        _rect(b, half + 3, 66, w - 4, 76, "FURNITURE")
+    return f
+
+
+def _blk_nightstand(b):
+    _rect(b, 0, 0, 20, 18, "FURNITURE")
+
+
+def _blk_range(b):
+    _rect(b, 0, 0, 30, 25)
+    for bx in (8, 22):
+        for by in (7, 18):
+            b.add_circle((bx, by), 4, dxfattribs={"layer": "FIXTURE"})
+
+
+def _blk_kitchen_sink(b):
+    _rect(b, 0, 0, 33, 22)
+    _rect(b, 3, 3, 16, 19)
+    _rect(b, 17, 3, 30, 19)
+
+
+def _blk_ref(b):
+    _rect(b, 0, 0, 36, 30)
+    b.add_line((0, 0), (36, 30), dxfattribs={"layer": "FIXTURE"})
+
+
+def _blk_island(b):
+    _rect(b, 0, 0, 96, 42)
+
+
+def _blk_dining(b):
+    _rect(b, 12, 18, 84, 60, "FURNITURE")
+    for k in range(3):
+        b.add_circle((24 + k * 24, 8), 8, dxfattribs={"layer": "FURNITURE"})
+        b.add_circle((24 + k * 24, 70), 8, dxfattribs={"layer": "FURNITURE"})
+
+
+def _blk_desk(b):
+    _rect(b, 0, 10, 60, 36, "FURNITURE")
+    b.add_circle((30, 0), 10, dxfattribs={"layer": "FURNITURE"})
+
+
+def _blk_bench(b):
+    _rect(b, 0, 0, 60, 16, "FURNITURE")
+    for k in range(1, 4):
+        b.add_line((k * 15, 0), (k * 15, 16), dxfattribs={"layer": "FURNITURE"})
+
+
+BLOCKS = {
+    "TOILET": _blk_toilet, "SINK": _blk_sink, "SHOWER": _blk_shower,
+    "WASHER": lambda b: _blk_appliance(b), "DRYER": lambda b: _blk_appliance(b),
+    "BED_KING": _blk_bed(76), "BED_QUEEN": _blk_bed(60), "NIGHTSTAND": _blk_nightstand,
+    "RANGE": _blk_range, "KITCHEN_SINK": _blk_kitchen_sink, "REFRIGERATOR": _blk_ref, "ISLAND": _blk_island,
+    "DINING_TABLE": _blk_dining, "DESK": _blk_desk, "BENCH_LOCKERS": _blk_bench,
+}
+
+
+def _put(doc, msp, name, x, y, rotation=0.0):
+    if name not in doc.blocks:
+        blk = doc.blocks.new(name)
+        BLOCKS[name](blk)
+    msp.add_blockref(name, (x, y), dxfattribs={"rotation": rotation, "layer": "FIXTURE"})
+
+
+def _draw(module_id: str, doc, msp, W: float, D: float) -> None:
+    """W, D = minimum box in inches. Door wall at the bottom (y=0), back wall at y=D."""
     if module_id == "great_room":
-        # kitchen run on the back wall, island, dining table
-        _rect(msp, 24, D - 25, W - 24, D)
-        _rect(msp, W - 24 - 36, D - 30, W - 24, D)                      # refrigerator
-        msp.add_text("REF", height=4, dxfattribs={"layer": "FIXTURE", "insert": (W - 24 - 30, D - 18)})
         cx = W / 2
-        _rect(msp, cx - 15, D - 22, cx + 15, D - 4)                       # sink
-        _rect(msp, 36, D - 25, 66, D)                                     # range
-        for bx in (43, 59):
-            for by in (D - 19, D - 7):
-                msp.add_circle((bx, by), 4, dxfattribs={"layer": "FIXTURE"})
-        _rect(msp, cx - 48, D - 25 - 42 - 42, cx + 48, D - 25 - 42)       # island 8' x 3.5'
-        ty = D - 25 - 42 - 42 - 48 - 42
-        _rect(msp, cx - 36, ty, cx + 36, ty + 42, "FURNITURE")            # dining table
-        for k in range(3):
-            x = cx - 24 + k * 24
-            msp.add_circle((x, ty - 10), 8, dxfattribs={"layer": "FURNITURE"})
-            msp.add_circle((x, ty + 52), 8, dxfattribs={"layer": "FURNITURE"})
+        _rect(msp, 24, D - 25, W - 24, D)                               # counter run on the back wall
+        _put(doc, msp, "RANGE", 40, D - 25)
+        _put(doc, msp, "KITCHEN_SINK", cx - 16.5, D - 23)
+        _put(doc, msp, "REFRIGERATOR", W - 24 - 36, D - 30)
+        _put(doc, msp, "ISLAND", cx - 48, D - 25 - 42 - 42)
+        _put(doc, msp, "DINING_TABLE", cx - 48, max(0, D - 25 - 42 - 42 - 36 - 78))
     elif module_id == "master_bedroom":
         cx = W / 2
-        _rect(msp, cx - 38, D - 80, cx + 38, D, "FURNITURE")             # king bed
-        msp.add_line((cx - 38, D - 60), (cx + 38, D - 60), dxfattribs={"layer": "FURNITURE"})
-        _rect(msp, cx - 32, D - 14, cx - 4, D - 4, "FURNITURE")
-        _rect(msp, cx + 4, D - 14, cx + 32, D - 4, "FURNITURE")
-        _rect(msp, cx - 62, D - 20, cx - 42, D, "FURNITURE")             # nightstands
-        _rect(msp, cx + 42, D - 20, cx + 62, D, "FURNITURE")
+        _put(doc, msp, "BED_KING", cx - 38, D - 80)
+        _put(doc, msp, "NIGHTSTAND", cx - 62, D - 18)
+        _put(doc, msp, "NIGHTSTAND", cx + 42, D - 18)
     elif module_id == "bedroom":
         cx = W / 2
-        _rect(msp, cx - 30, D - 80, cx + 30, D, "FURNITURE")             # queen bed
-        msp.add_line((cx - 30, D - 62), (cx + 30, D - 62), dxfattribs={"layer": "FURNITURE"})
-        _rect(msp, cx - 26, D - 14, cx - 3, D - 4, "FURNITURE")
-        _rect(msp, cx + 3, D - 14, cx + 26, D - 4, "FURNITURE")
-        _rect(msp, cx - 52, D - 18, cx - 34, D, "FURNITURE")
+        _put(doc, msp, "BED_QUEEN", cx - 30, D - 80)
+        _put(doc, msp, "NIGHTSTAND", cx - 52, D - 18)
     elif module_id == "master_bath":
-        _rect(msp, 0, D - 22, 60, D)                                      # double vanity
-        for x in (15, 45):
-            msp.add_ellipse((x, D - 11), major_axis=(7, 0), ratio=0.7, dxfattribs={"layer": "FIXTURE"})
-        _toilet(msp, W - 12, D)
-        _rect(msp, 0, 0 + 2, 36, 38)                                      # shower
-        msp.add_line((0, 2), (36, 38), dxfattribs={"layer": "FIXTURE"})
-        msp.add_line((0, 38), (36, 2), dxfattribs={"layer": "FIXTURE"})
+        _rect(msp, 0, D - 22, 60, D)                                    # double vanity top
+        _put(doc, msp, "SINK", 4, D - 21)
+        _put(doc, msp, "SINK", 32, D - 21)
+        _put(doc, msp, "SHOWER", W - 36, D - 36)
+        _put(doc, msp, "TOILET", W - 28, 20, rotation=-90)              # on the right wall, front half
     elif module_id == "full_bath":
-        _rect(msp, 0, D - 30, 60, D)                                      # tub
-        _rect(msp, 4, D - 26, 56, D - 4)
-        _toilet(msp, W - 12, D)
-        _rect(msp, W - 22, 0, W, 20)                                      # vanity
-        msp.add_ellipse((W - 11, 10), major_axis=(0, 6), ratio=0.7, dxfattribs={"layer": "FIXTURE"})
+        _put(doc, msp, "SHOWER", 0, D - 36)
+        _put(doc, msp, "TOILET", 41, D - 28)
+        _put(doc, msp, "SINK", W - 24, D - 21)
     elif module_id == "half_bath":
-        _toilet(msp, W - 14, D)
-        _rect(msp, 0, D - 18, 16, D)
-        msp.add_circle((8, D - 9), 5, dxfattribs={"layer": "FIXTURE"})
+        _put(doc, msp, "SINK", 0, D - 21)
+        _put(doc, msp, "TOILET", W - 26, D - 28)
+    elif module_id == "laundry_mud":
+        _put(doc, msp, "WASHER", 0, D - 28)
+        _put(doc, msp, "DRYER", 28, D - 28)
+        _put(doc, msp, "BENCH_LOCKERS", 0, 0, rotation=0) if W >= 60 else None
     elif module_id == "master_wic":
         _rect(msp, 0, 0, 14, D, "FURNITURE")
         _rect(msp, W - 14, 0, W, D, "FURNITURE")
         msp.add_line((7, 0), (7, D), dxfattribs={"layer": "FURNITURE"})
         msp.add_line((W - 7, 0), (W - 7, D), dxfattribs={"layer": "FURNITURE"})
-    elif module_id == "laundry":
-        for x0 in (0, 28):
-            _rect(msp, x0, D - 28, x0 + 27, D)
-            msp.add_circle((x0 + 13.5, D - 15), 9, dxfattribs={"layer": "FIXTURE"})
-        _rect(msp, 0, D - 26, W, D, "FIXTURE") if W >= 72 else None
-    elif module_id == "mudroom":
-        _rect(msp, 0, D - 18, W, D, "FURNITURE")                          # bench + lockers
-        for k in range(1, int(W // 15)):
-            msp.add_line((k * 15, D - 18), (k * 15, D), dxfattribs={"layer": "FURNITURE"})
     elif module_id == "pantry":
         _rect(msp, 0, 0, 12, D)
         _rect(msp, 12, D - 12, W, D)
         _rect(msp, W - 12, 0, W, D - 12)
     elif module_id == "office":
-        cx = W / 2
-        _rect(msp, cx - 30, D - 26, cx + 30, D, "FURNITURE")              # desk
-        msp.add_circle((cx, D - 40), 10, dxfattribs={"layer": "FURNITURE"})
-        _rect(msp, 0, 0, 14, 48, "FURNITURE")                             # bookcase
+        _put(doc, msp, "DESK", W / 2 - 30, D - 36)
+        _rect(msp, 0, 0, 14, 48, "FURNITURE")                           # bookcase
     elif module_id == "flex":
         cx, cy = W / 2, D / 2
-        _rect(msp, cx - 44, cy - 10, cx + 44, cy + 26, "FURNITURE")       # sectional
+        _rect(msp, cx - 44, cy - 10, cx + 44, cy + 26, "FURNITURE")     # sectional
         _rect(msp, cx - 44, cy - 10, cx - 8, cy + 26, "FURNITURE")
-        _rect(msp, cx - 20, cy - 40, cx + 20, cy - 20, "FURNITURE")       # coffee table
+        _rect(msp, cx - 20, cy - 40, cx + 20, cy - 20, "FURNITURE")     # coffee table
 
 
 def create_placeholder_library(rb: Rulebook, overwrite: bool = False, directory: Path | None = None) -> list[Path]:
@@ -142,10 +208,51 @@ def create_placeholder_library(rb: Rulebook, overwrite: bool = False, directory:
             doc.layers.add(name, color=color)
         msp = doc.modelspace()
         W, D = m.min_w * 12, m.min_d * 12
-        _draw(m.id, msp, W, D)
+        _draw(m.id, doc, msp, W, D)
         doc.saveas(path)
         out.append(path)
     return out
+
+
+# ---------------------------------------------------------------------------
+# Fixture inventory (block names used in a module drawing)
+# ---------------------------------------------------------------------------
+FIXTURE_SYNONYMS = {
+    "sink": ("SINK", "LAV", "VANITY", "BASIN"),
+    "toilet": ("TOILET", "WC", "WATER_CLOSET", "WATERCLOSET"),
+    "shower": ("SHOWER", "SHWR"),
+    "tub": ("TUB", "BATHTUB"),
+    "washer": ("WASHER",),
+    "dryer": ("DRYER",),
+}
+
+
+@lru_cache(maxsize=128)
+def _block_names(path_str: str, mtime: float) -> frozenset[str]:
+    doc = ezdxf.readfile(path_str)
+    names: set[str] = set()
+
+    def walk(layout):
+        for e in layout:
+            if e.dxftype() == "INSERT":
+                n = e.dxf.name.upper()
+                names.add(n)
+                if n in doc.blocks:
+                    walk(doc.blocks[n])
+    walk(doc.modelspace())
+    return frozenset(names)
+
+
+def module_fixtures(path: Path | None) -> set[str]:
+    """Generic fixture names ('sink', 'toilet', 'shower'...) found in a module drawing."""
+    if not path or not path.exists():
+        return set()
+    names = _block_names(str(path), path.stat().st_mtime)
+    found = set()
+    for generic, keys in FIXTURE_SYNONYMS.items():
+        if any(k in n for n in names for k in keys):
+            found.add(generic)
+    return found
 
 
 # ---------------------------------------------------------------------------

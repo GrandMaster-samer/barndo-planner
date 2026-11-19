@@ -489,7 +489,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2461363.011435185
+2461364.92568287
   9
 $TDUCREATE
  40
@@ -497,7 +497,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2461363.011435185
+2461364.92568287
   9
 $TDUUPDATE
  40
@@ -549,7 +549,7 @@ $SPLINESEGS
   9
 $HANDSEED
   5
-3A
+4C
   9
 $SURFTAB1
  70
@@ -929,11 +929,11 @@ $PSTYLEMODE
   9
 $FINGERPRINTGUID
   2
-{CA9AE9F9-F87A-4C68-9BF6-861D1B07CB66}
+{AB466295-B8FB-414A-9E80-6C5B36A7A2DB}
   9
 $VERSIONGUID
   2
-{A4F65F92-711D-47F5-8BBB-B5640720D656}
+{AFB29D36-EFC6-4F6C-B12E-A08077DF8EBF}
   9
 $EXTNAMES
 290
@@ -1749,7 +1749,7 @@ ACAD
   0
 APPID
   5
-37
+49
 330
 3
 100
@@ -1763,7 +1763,7 @@ HATCHBACKGROUNDCOLOR
   0
 APPID
   5
-38
+4A
 330
 3
 100
@@ -1939,7 +1939,7 @@ BLOCK_RECORD
 100
 AcDbSymbolTable
  70
-2
+5
   0
 BLOCK_RECORD
   5
@@ -1974,6 +1974,66 @@ AcDbBlockTableRecord
 *Paper_Space
 340
 1E
+ 70
+0
+280
+1
+281
+0
+  0
+BLOCK_RECORD
+  5
+31
+330
+9
+100
+AcDbSymbolTableRecord
+100
+AcDbBlockTableRecord
+  2
+SHOWER
+340
+0
+ 70
+0
+280
+1
+281
+0
+  0
+BLOCK_RECORD
+  5
+3B
+330
+9
+100
+AcDbSymbolTableRecord
+100
+AcDbBlockTableRecord
+  2
+TOILET
+340
+0
+ 70
+0
+280
+1
+281
+0
+  0
+BLOCK_RECORD
+  5
+42
+330
+9
+100
+AcDbSymbolTableRecord
+100
+AcDbBlockTableRecord
+  2
+SINK
+340
+0
  70
 0
 280
@@ -2065,81 +2125,37 @@ AcDbEntity
 100
 AcDbBlockEnd
   0
-ENDSEC
-  0
-SECTION
-  2
-ENTITIES
-  0
-LWPOLYLINE
-  5
-31
-330
-17
-100
-AcDbEntity
-  8
-FIXTURE
-100
-AcDbPolyline
- 90
-4
- 70
-1
- 10
-0.0
- 20
-30.0
- 10
-60.0
- 20
-30.0
- 10
-60.0
- 20
-60.0
- 10
-0.0
- 20
-60.0
-  0
-LWPOLYLINE
+BLOCK
   5
 32
 330
-17
+31
 100
 AcDbEntity
   8
-FIXTURE
+0
 100
-AcDbPolyline
- 90
-4
+AcDbBlockBegin
+  2
+SHOWER
  70
-1
+0
  10
-4.0
+0.0
  20
-34.0
- 10
-56.0
- 20
-34.0
- 10
-56.0
- 20
-56.0
- 10
-4.0
- 20
-56.0
+0.0
+ 30
+0.0
+  3
+SHOWER
+  1
+
   0
 LWPOLYLINE
   5
-33
+34
 330
-17
+31
 100
 AcDbEntity
   8
@@ -2151,27 +2167,197 @@ AcDbPolyline
  70
 1
  10
-62.0
+0.0
  20
-52.0
+0.0
  10
-82.0
+36.0
  20
-52.0
+0.0
  10
-82.0
+36.0
  20
-60.0
+36.0
  10
-62.0
+0.0
  20
-60.0
+36.0
+  0
+LWPOLYLINE
+  5
+35
+330
+31
+100
+AcDbEntity
+  8
+FIXTURE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+2.0
+ 20
+2.0
+ 10
+34.0
+ 20
+2.0
+ 10
+34.0
+ 20
+34.0
+ 10
+2.0
+ 20
+34.0
+  0
+CIRCLE
+  5
+36
+330
+31
+100
+AcDbEntity
+  8
+FIXTURE
+100
+AcDbCircle
+ 10
+18.0
+ 20
+18.0
+ 30
+0.0
+ 40
+1.5
+  0
+LINE
+  5
+37
+330
+31
+100
+AcDbEntity
+  8
+FIXTURE
+100
+AcDbLine
+ 10
+2.0
+ 20
+2.0
+ 30
+0.0
+ 11
+34.0
+ 21
+34.0
+ 31
+0.0
+  0
+LINE
+  5
+38
+330
+31
+100
+AcDbEntity
+  8
+FIXTURE
+100
+AcDbLine
+ 10
+2.0
+ 20
+34.0
+ 30
+0.0
+ 11
+34.0
+ 21
+2.0
+ 31
+0.0
+  0
+ENDBLK
+  5
+33
+330
+31
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
+BLOCK
+  5
+3C
+330
+3B
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
+  2
+TOILET
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+TOILET
+  1
+
+  0
+LWPOLYLINE
+  5
+3E
+330
+3B
+100
+AcDbEntity
+  8
+FIXTURE
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+0.0
+ 20
+20.0
+ 10
+20.0
+ 20
+20.0
+ 10
+20.0
+ 20
+28.0
+ 10
+0.0
+ 20
+28.0
   0
 ELLIPSE
   5
-34
+3F
 330
-17
+3B
 100
 AcDbEntity
   8
@@ -2179,15 +2365,15 @@ FIXTURE
 100
 AcDbEllipse
  10
-72.0
+10.0
  20
-42.0
+10.0
  30
 0.0
  11
 0.0
  21
-9.0
+9.5
  31
 0.0
  40
@@ -2197,11 +2383,49 @@ AcDbEllipse
  42
 6.283185307179586
   0
+ENDBLK
+  5
+3D
+330
+3B
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
+BLOCK
+  5
+43
+330
+42
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
+  2
+SINK
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+SINK
+  1
+
+  0
 LWPOLYLINE
   5
-35
+45
 330
-17
+42
 100
 AcDbEntity
   8
@@ -2213,27 +2437,27 @@ AcDbPolyline
  70
 1
  10
-62.0
+0.0
  20
 0.0
  10
-84.0
+24.0
  20
 0.0
  10
-84.0
+24.0
  20
-20.0
+21.0
  10
-62.0
+0.0
  20
-20.0
+21.0
   0
 ELLIPSE
   5
-36
+46
 330
-17
+42
 100
 AcDbEntity
   8
@@ -2241,15 +2465,15 @@ FIXTURE
 100
 AcDbEllipse
  10
-73.0
+12.0
  20
 10.0
  30
 0.0
  11
-0.0
+7.0
  21
-6.0
+0.0
  31
 0.0
  40
@@ -2258,6 +2482,84 @@ AcDbEllipse
 0.0
  42
 6.283185307179586
+  0
+ENDBLK
+  5
+44
+330
+42
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
+ENDSEC
+  0
+SECTION
+  2
+ENTITIES
+  0
+INSERT
+  5
+39
+330
+17
+100
+AcDbEntity
+  8
+FIXTURE
+100
+AcDbBlockReference
+  2
+SHOWER
+ 10
+0.0
+ 20
+36.0
+ 30
+0.0
+  0
+INSERT
+  5
+40
+330
+17
+100
+AcDbEntity
+  8
+FIXTURE
+100
+AcDbBlockReference
+  2
+TOILET
+ 10
+41.0
+ 20
+44.0
+ 30
+0.0
+  0
+INSERT
+  5
+47
+330
+17
+100
+AcDbEntity
+  8
+FIXTURE
+100
+AcDbBlockReference
+  2
+SINK
+ 10
+72.0
+ 20
+51.0
+ 30
+0.0
   0
 ENDSEC
   0
@@ -3249,7 +3551,7 @@ CREATED_BY_EZDXF
   3
 WRITTEN_BY_EZDXF
 350
-39
+4B
   0
 DICTIONARYVAR
   5
@@ -3261,11 +3563,11 @@ DictionaryVariables
 280
 0
   1
-1.4.5 @ 2026-11-18T00:16:28.884849+00:00
+1.4.5 @ 2026-11-19T22:12:59.505575+00:00
   0
 DICTIONARYVAR
   5
-39
+4B
 330
 2D
 100
@@ -3273,7 +3575,7 @@ DictionaryVariables
 280
 0
   1
-1.4.5 @ 2026-11-18T00:16:28.885756+00:00
+1.4.5 @ 2026-11-19T22:12:59.507427+00:00
   0
 ENDSEC
   0

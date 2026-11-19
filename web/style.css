@@ -104,3 +104,14 @@ dialog::backdrop { background: rgba(30, 25, 20, .55); }
 }
 
 [hidden] { display: none !important; }
+
+.plan-card .concept { font-size: .85rem; color: var(--steel); font-weight: 500; }
+.chip.warn { background: #fdf0d5; color: #8a5a00; }
+.rules { list-style: none; padding: 0; margin: .3rem 0 0; display: grid; gap: .35rem; font-size: .84rem; }
+.rules li { display: flex; gap: .5rem; align-items: flex-start; padding: .35rem .5rem; border-radius: 8px; background: #f3f8f3; }
+.rules li.warn { background: #fdf6e6; }
+.rules li.fail, .rules li.unknown { background: #fbe9e4; }
+.rules .mark { font-weight: 700; width: 1.1rem; flex: none; text-align: center; color: var(--ok); }
+.rules li.warn .mark { color: #8a5a00; }
+.rules li.fail .mark { color: var(--warn); }
+.rules small { color: var(--muted); }

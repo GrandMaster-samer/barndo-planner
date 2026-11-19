@@ -116,6 +116,13 @@ def _card(lay: Layout) -> dict[str, Any]:
         "notes": lay.notes,
         "estimate": {k: lay.estimate[k] for k in ("total", "per_living_sqft", "within_budget", "budget", "groups")},
         "svg": render_svg(lay, RB, scale=7.5, show_dims=False, compact=True),
+        "concept": lay.concept,
+        "rules": {
+            "total": len(lay.rule_checks),
+            "passed": sum(1 for r in lay.rule_checks if r["status"] == "pass"),
+            "warnings": sum(1 for r in lay.rule_checks if r["status"] == "warn"),
+            "failed": sum(1 for r in lay.rule_checks if r["status"] in ("fail", "unknown")),
+        },
     }
 
 
@@ -226,6 +233,11 @@ def proposal(layout_id: str, customer: str = "", ai: bool = True) -> str:
         budget_line = (f"<p class='budget {'ok' if ok else 'over'}'>Your budget: ${est['budget']:,.0f} - this plan is "
                        f"{'within' if ok else 'above'} budget.</p>")
     title = f"{COMPANY_NAME} - Concept Plan {lay.id}"
+    b = est.get("building", {})
+    mark = {"pass": "&#10003;", "warn": "!", "fail": "&#10007;"}
+    rule_rows = "".join(
+        f"<tr class='{r['status']}'><td>{mark.get(r['status'], '?')}</td><td>{escape(str(r['id']))}. {escape(r['rule'])}"
+        f"<br><span class='small'>{escape(r['detail'])}</span></td></tr>" for r in lay.rule_checks)
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1"><title>{escape(title)}</title>
 <link rel="stylesheet" href="/static/proposal.css"></head><body>
@@ -242,6 +254,8 @@ def proposal(layout_id: str, customer: str = "", ai: bool = True) -> str:
   <div><b>{m['bedrooms']} / {m['full_baths']}{('.5' if m['half_baths'] else '')}</b><span>bed / bath</span></div>
   <div><b>${est['total']:,.0f}</b><span>budget estimate</span></div>
  </div>
+ <p class="small">{escape(lay.concept)} &middot; Eave {b.get('eave_height', 0):g}' &middot; Roof {b.get('roof_pitch', 0):g}:12
+ &middot; Ridge {b.get('ridge_height', 0):.1f}' &middot; Wall area {b.get('wall_area_sqft', 0):,} sf &middot; Roof area {b.get('roof_area_sqft', 0):,} sf</p>
  <h2>About this plan</h2><p>{escape(summary)}</p>
  {budget_line}
  <div class="cols">
@@ -251,6 +265,7 @@ def proposal(layout_id: str, customer: str = "", ai: bool = True) -> str:
    <tr class='tot'><td>Total</td><td class='n'>${est['total']:,.0f}</td></tr></table>
    <p class="small">{escape(est['disclaimer'])} About ${est['per_living_sqft']:,} per living sq ft.</p></div>
  </div>
+ <h2>Company rules check</h2><table class="rules">{rule_rows}</table>
  <p class="small">Concept plan generated from {escape(COMPANY_NAME)}'s pre-engineered room modules. Final drawings,
  structural engineering, site work and code review are completed during design development. Plan ID {lay.id}.</p>
 </section></main></body></html>"""
